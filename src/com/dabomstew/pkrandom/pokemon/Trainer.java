@@ -3,9 +3,10 @@ package com.dabomstew.pkrandom.pokemon;
 /*----------------------------------------------------------------------------*/
 /*--  Trainer.java - represents a Trainer's pokemon set/other details.      --*/
 /*--                                                                        --*/
-/*--  Part of "Universal Pokemon Randomizer" by Dabomstew                   --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
 /*--  Pokemon and any associated names and the like are                     --*/
-/*--  trademark and (C) Nintendo 1996-2012.                                 --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
 /*--                                                                        --*/
 /*--  The custom code written here is licensed under the terms of the GPL:  --*/
 /*--                                                                        --*/
@@ -28,23 +29,25 @@ import java.util.List;
 
 public class Trainer implements Comparable<Trainer> {
     public int offset;
-    public List<TrainerPokemon> pokemon = new ArrayList<TrainerPokemon>();
+    public List<TrainerPokemon> pokemon = new ArrayList<>();
     public String tag;
     public boolean importantTrainer;
     public int poketype;
     public String name;
     public int trainerclass;
     public String fullDisplayName;
+    public boolean couldBeMultiBattle;
+    public int forceStarterPosition = -1;
 
     public String toString() {
         StringBuilder sb = new StringBuilder("[");
         if (fullDisplayName != null) {
-            sb.append(fullDisplayName + " ");
+            sb.append(fullDisplayName).append(" ");
         } else if (name != null) {
-            sb.append(name + " ");
+            sb.append(name).append(" ");
         }
         if (trainerclass != 0) {
-            sb.append("(" + trainerclass + ") - ");
+            sb.append("(").append(trainerclass).append(") - ");
         }
         sb.append(String.format("%x", offset));
         sb.append(" => ");
@@ -53,12 +56,12 @@ public class Trainer implements Comparable<Trainer> {
             if (!first) {
                 sb.append(',');
             }
-            sb.append(p.pokemon.name + " Lv" + p.level);
+            sb.append(p.pokemon.name).append(" Lv").append(p.level);
             first = false;
         }
         sb.append(']');
         if (tag != null) {
-            sb.append(" (" + tag + ")");
+            sb.append(" (").append(tag).append(")");
         }
         return sb.toString();
     }
@@ -80,13 +83,24 @@ public class Trainer implements Comparable<Trainer> {
         if (getClass() != obj.getClass())
             return false;
         Trainer other = (Trainer) obj;
-        if (offset != other.offset)
-            return false;
-        return true;
+        return offset == other.offset;
     }
 
     @Override
     public int compareTo(Trainer o) {
         return offset - o.offset;
+    }
+
+    public boolean isBoss() {
+        return tag != null && (tag.startsWith("ELITE") || tag.startsWith("CHAMPION")
+                || tag.startsWith("UBER") || tag.endsWith("LEADER"));
+    }
+
+    public boolean isImportant() {
+        return tag != null && (tag.startsWith("RIVAL") || tag.startsWith("FRIEND") || tag.endsWith("STRONG"));
+    }
+
+    public boolean skipImportant() {
+        return ((tag != null) && (tag.startsWith("RIVAL1-") || tag.startsWith("FRIEND1-") || tag.endsWith("NOTSTRONG")));
     }
 }

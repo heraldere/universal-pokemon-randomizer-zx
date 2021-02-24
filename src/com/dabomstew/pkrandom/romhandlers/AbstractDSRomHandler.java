@@ -4,9 +4,10 @@ package com.dabomstew.pkrandom.romhandlers;
 /*--  AbstractDSRomHandler.java - a base class for DS rom handlers          --*/
 /*--                              which standardises common DS functions.   --*/
 /*--                                                                        --*/
-/*--  Part of "Universal Pokemon Randomizer" by Dabomstew                   --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
 /*--  Pokemon and any associated names and the like are                     --*/
-/*--  trademark and (C) Nintendo 1996-2012.                                 --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
 /*--                                                                        --*/
 /*--  The custom code written here is licensed under the terms of the GPL:  --*/
 /*--                                                                        --*/
@@ -80,7 +81,7 @@ public abstract class AbstractDSRomHandler extends AbstractRomHandler {
     protected abstract void savingROM();
 
     @Override
-    public boolean saveRom(String filename) {
+    public boolean saveRomFile(String filename, long seed) {
         savingROM();
         try {
             baseRom.saveTo(filename);
@@ -88,6 +89,40 @@ public abstract class AbstractDSRomHandler extends AbstractRomHandler {
             throw new RandomizerIOException(e);
         }
         return true;
+    }
+
+    @Override
+    public boolean saveRomDirectory(String filename) {
+        // do nothing. DS games do have the concept of a filesystem, but it's way more
+        // convenient for users to use ROM files instead.
+        return true;
+    }
+
+    @Override
+    public boolean hasGameUpdateLoaded() {
+        return false;
+    }
+
+    @Override
+    public boolean loadGameUpdate(String filename) {
+        // do nothing, as DS games don't have external game updates
+        return true;
+    }
+
+    @Override
+    public void removeGameUpdate() {
+        // do nothing, as DS games don't have external game updates
+    }
+
+    @Override
+    public String getGameUpdateVersion() {
+        // do nothing, as DS games don't have external game updates
+        return null;
+    }
+
+    @Override
+    public void printRomDiagnostics(PrintStream logStream) {
+        baseRom.printRomDiagnostics(logStream);
     }
 
     public void closeInnerRom() throws IOException {
@@ -120,12 +155,13 @@ public abstract class AbstractDSRomHandler extends AbstractRomHandler {
             fis.skip(0x0C);
             byte[] sig = FileFunctions.readFullyIntoBuffer(fis, 4);
             fis.close();
-            String ndsCode = new String(sig, "US-ASCII");
-            return ndsCode;
+            return new String(sig, "US-ASCII");
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
     }
+
+    protected int readByte(byte[] data, int offset) { return data[offset] & 0xFF; }
 
     protected int readWord(byte[] data, int offset) {
         return (data[offset] & 0xFF) | ((data[offset + 1] & 0xFF) << 8);

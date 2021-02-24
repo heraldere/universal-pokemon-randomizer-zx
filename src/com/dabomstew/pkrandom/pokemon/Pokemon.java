@@ -4,9 +4,10 @@ package com.dabomstew.pkrandom.pokemon;
 /*--  Pokemon.java - represents an individual Pokemon, and contains         --*/
 /*--                 common Pokemon-related functions.                      --*/
 /*--                                                                        --*/
-/*--  Part of "Universal Pokemon Randomizer" by Dabomstew                   --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
 /*--  Pokemon and any associated names and the like are                     --*/
-/*--  trademark and (C) Nintendo 1996-2012.                                 --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
 /*--                                                                        --*/
 /*--  The custom code written here is licensed under the terms of the GPL:  --*/
 /*--                                                                        --*/
@@ -24,6 +25,8 @@ package com.dabomstew.pkrandom.pokemon;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
+import com.dabomstew.pkrandom.constants.Gen7Constants;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +37,14 @@ public class Pokemon implements Comparable<Pokemon> {
 
     public String name;
     public int number;
+
+    public String formeSuffix = "";
+    public Pokemon baseForme = null;
+    public int formeNumber = 0;
+    public int cosmeticForms = 0;
+    public int formeSpriteIndex = 0;
+    public boolean actuallyCosmetic = false;
+    public List<Integer> realCosmeticFormNumbers = new ArrayList<>();
 
     public Type primaryType, secondaryType;
 
@@ -49,12 +60,17 @@ public class Pokemon implements Comparable<Pokemon> {
 
     public int frontSpritePointer, picDimensions;
 
+    public int callRate;
+
     public ExpCurve growthCurve;
 
-    public List<Evolution> evolutionsFrom = new ArrayList<Evolution>();
-    public List<Evolution> evolutionsTo = new ArrayList<Evolution>();
+    public List<Evolution> evolutionsFrom = new ArrayList<>();
+    public List<Evolution> evolutionsTo = new ArrayList<>();
 
-    public List<Integer> shuffledStatsOrder = null;
+    public List<MegaEvolution> megaEvolutionsFrom = new ArrayList<>();
+    public List<MegaEvolution> megaEvolutionsTo = new ArrayList<>();
+
+    private List<Integer> shuffledStatsOrder;
 
     // A flag to use for things like recursive stats copying.
     // Must not rely on the state of this flag being preserved between calls.
@@ -155,7 +171,7 @@ public class Pokemon implements Comparable<Pokemon> {
         special = (int) Math.ceil((spatk + spdef) / 2.0f);
     }
 
-    public int bst() {
+    private int bst() {
         return hp + attack + defense + spatk + spdef + speed;
     }
 
@@ -168,11 +184,38 @@ public class Pokemon implements Comparable<Pokemon> {
         }
     }
 
+    public void copyBaseFormeBaseStats(Pokemon baseForme) {
+        hp = baseForme.hp;
+        attack = baseForme.attack;
+        defense = baseForme.defense;
+        speed = baseForme.speed;
+        spatk = baseForme.spatk;
+        spdef = baseForme.spdef;
+    }
+
+    public void copyBaseFormeAbilities(Pokemon baseForme) {
+        ability1 = baseForme.ability1;
+        ability2 = baseForme.ability2;
+        ability3 = baseForme.ability3;
+    }
+
+    public void copyBaseFormeEvolutions(Pokemon baseForme) {
+        evolutionsFrom = baseForme.evolutionsFrom;
+    }
+
+    public int getSpriteIndex() {
+        return formeNumber == 0 ? number : formeSpriteIndex + formeNumber - 1;
+    }
+
+    public String fullName() {
+        return name + formeSuffix;
+    }
+
     @Override
     public String toString() {
-        return "Pokemon [name=" + name + ", number=" + number + ", primaryType=" + primaryType + ", secondaryType="
-                + secondaryType + ", hp=" + hp + ", attack=" + attack + ", defense=" + defense + ", spatk=" + spatk
-                + ", spdef=" + spdef + ", speed=" + speed + "]";
+        return "Pokemon [name=" + name + formeSuffix + ", number=" + number + ", primaryType=" + primaryType
+                + ", secondaryType=" + secondaryType + ", hp=" + hp + ", attack=" + attack + ", defense=" + defense
+                + ", spatk=" + spatk + ", spdef=" + spdef + ", speed=" + speed + "]";
     }
 
     public String toStringRBY() {
@@ -198,9 +241,7 @@ public class Pokemon implements Comparable<Pokemon> {
         if (getClass() != obj.getClass())
             return false;
         Pokemon other = (Pokemon) obj;
-        if (number != other.number)
-            return false;
-        return true;
+        return number == other.number;
     }
 
     @Override
@@ -210,10 +251,32 @@ public class Pokemon implements Comparable<Pokemon> {
 
     private static final List<Integer> legendaries = Arrays.asList(144, 145, 146, 150, 151, 243, 244, 245, 249, 250,
             251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488,
-            489, 490, 491, 492, 493, 494, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649);
+            489, 490, 491, 492, 493, 494, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 716, 717, 718,
+            719, 720, 721, 785, 786, 787, 788, 789, 790, 791, 792, 800, 801, 802, 807);
+
+    private static final List<Integer> strongLegendaries = Arrays.asList(150, 249, 250, 382, 383, 384, 483, 484, 486,
+            487, 493, 643, 644, 646, 716, 717, 789, 790, 791, 792);
+
+    private static final List<Integer> ultraBeasts = Arrays.asList(793, 794, 795, 796, 797, 798, 799, 803, 804, 805, 806);
 
     public boolean isLegendary() {
-        return legendaries.contains(this.number);
+        return formeNumber == 0 ? legendaries.contains(this.number) : legendaries.contains(this.baseForme.number);
+    }
+
+    public boolean isStrongLegendary() {
+        return formeNumber == 0 ? strongLegendaries.contains(this.number) : strongLegendaries.contains(this.baseForme.number);
+    }
+
+    // This method can only be used in contexts where alt formes are NOT involved; otherwise, some alt formes
+    // will be considered as Ultra Beasts in SM.
+    // In contexts where formes are involved, use "if (ultraBeastList.contains(...))" instead,
+    // assuming "checkPokemonRestrictions" has been used at some point beforehand.
+    public boolean isUltraBeast() {
+        return ultraBeasts.contains(this.number);
+    }
+
+    public int getCosmeticFormNumber(int num) {
+        return realCosmeticFormNumbers.isEmpty() ? num : realCosmeticFormNumbers.get(num);
     }
 
 }

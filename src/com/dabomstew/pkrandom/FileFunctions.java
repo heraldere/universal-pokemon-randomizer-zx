@@ -3,9 +3,10 @@ package com.dabomstew.pkrandom;
 /*----------------------------------------------------------------------------*/
 /*--  FileFunctions.java - functions relating to file I/O.                  --*/
 /*--                                                                        --*/
-/*--  Part of "Universal Pokemon Randomizer" by Dabomstew                   --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
 /*--  Pokemon and any associated names and the like are                     --*/
-/*--  trademark and (C) Nintendo 1996-2012.                                 --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
 /*--                                                                        --*/
 /*--  The custom code written here is licensed under the terms of the GPL:  --*/
 /*--                                                                        --*/
@@ -23,16 +24,10 @@ package com.dabomstew.pkrandom;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -67,8 +62,8 @@ public class FileFunctions {
         return new File(original.getAbsolutePath().replace(original.getName(), "") + filename);
     }
 
-    private static List<String> overrideFiles = Arrays.asList(new String[] { SysConstants.customNamesFile,
-            SysConstants.tclassesFile, SysConstants.tnamesFile, SysConstants.nnamesFile });
+    private static List<String> overrideFiles = Arrays.asList(SysConstants.customNamesFile,
+            SysConstants.tclassesFile, SysConstants.tnamesFile, SysConstants.nnamesFile);
 
     public static boolean configExists(String filename) {
         if (overrideFiles.contains(filename)) {
@@ -105,6 +100,22 @@ public class FileFunctions {
         return cns;
     }
 
+    public static long readFullLongLittleEndian(byte[] data, int offset) {
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        buf.put(data, offset, 8);
+        buf.rewind();
+        return buf.getLong();
+    }
+
+    public static int readFullIntLittleEndian(byte[] data, int offset) {
+        ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        buf.put(data, offset, 4);
+        buf.rewind();
+        return buf.getInt();
+    }
+
     public static int readFullInt(byte[] data, int offset) {
         ByteBuffer buf = ByteBuffer.allocate(4).put(data, offset, 4);
         buf.rewind();
@@ -115,9 +126,24 @@ public class FileFunctions {
         return (data[index] & 0xFF) | ((data[index + 1] & 0xFF) << 8);
     }
 
+    public static void write2ByteInt(byte[] data, int offset, int value) {
+        data[offset] = (byte) (value & 0xFF);
+        data[offset + 1] = (byte) ((value >> 8) & 0xFF);
+    }
+
+    public static void writeFullIntLittleEndian(byte[] data, int offset, int value) {
+        byte[] valueBytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array();
+        System.arraycopy(valueBytes, 0, data, offset, 4);
+    }
+
     public static void writeFullInt(byte[] data, int offset, int value) {
         byte[] valueBytes = ByteBuffer.allocate(4).putInt(value).array();
         System.arraycopy(valueBytes, 0, data, offset, 4);
+    }
+
+    public static void writeFullLongLittleEndian(byte[] data, int offset, long value) {
+        byte[] valueBytes = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(value).array();
+        System.arraycopy(valueBytes, 0, data, offset, 8);
     }
 
     public static byte[] readFileFullyIntoBuffer(String filename) throws IOException {
@@ -141,11 +167,25 @@ public class FileFunctions {
         return buf;
     }
 
-    public static void readFully(InputStream in, byte[] buf, int offset, int length) throws IOException {
-        int offs = 0, read = 0;
+    private static void readFully(InputStream in, byte[] buf, int offset, int length) throws IOException {
+        int offs = 0, read;
         while (offs < length && (read = in.read(buf, offs + offset, length - offs)) != -1) {
             offs += read;
         }
+    }
+
+    public static int readIntFromFile(RandomAccessFile file, long offset) throws IOException {
+        byte[] buf = new byte[4];
+        file.seek(offset);
+        file.readFully(buf);
+        return readFullInt(buf, 0);
+    }
+
+    public static int readLittleEndianIntFromFile(RandomAccessFile file, long offset) throws IOException {
+        byte[] buf = new byte[4];
+        file.seek(offset);
+        file.readFully(buf);
+        return readFullIntLittleEndian(buf, 0);
     }
 
     public static void writeBytesToFile(String filename, byte[] data) throws IOException {
@@ -169,7 +209,7 @@ public class FileFunctions {
         }
     }
 
-    public static int getFileChecksum(InputStream stream) {
+    private static int getFileChecksum(InputStream stream) {
         try {
             Scanner sc = new Scanner(stream, "UTF-8");
             CRC32 checksum = new CRC32();
@@ -197,14 +237,12 @@ public class FileFunctions {
             // have to check the CRC
             int crc = readFullInt(data, offsetInData);
 
-            if (getFileChecksum(filename) != crc) {
-                return false;
-            }
+            return getFileChecksum(filename) == crc;
         }
         return true;
     }
 
-    public static byte[] getCodeTweakFile(String filename) throws IOException {
+    private static byte[] getCodeTweakFile(String filename) throws IOException {
         InputStream is = FileFunctions.class.getResourceAsStream("/com/dabomstew/pkrandom/patches/" + filename);
         byte[] buf = readFullyIntoBuffer(is, is.available());
         is.close();
@@ -220,8 +258,7 @@ public class FileFunctions {
             out.write(buf, 0, count);
         }
         in.close();
-        byte[] output = out.toByteArray();
-        return output;
+        return out.toByteArray();
     }
 
     public static void applyPatch(byte[] rom, String patchName) throws IOException {

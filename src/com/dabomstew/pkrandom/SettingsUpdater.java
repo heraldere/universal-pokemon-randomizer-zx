@@ -6,9 +6,10 @@ package com.dabomstew.pkrandom;
 /*--                         correct binary format so it can be loaded by   --*/
 /*--                         the current version.                           --*/
 /*--                                                                        --*/
-/*--  Part of "Universal Pokemon Randomizer" by Dabomstew                   --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
 /*--  Pokemon and any associated names and the like are                     --*/
-/*--  trademark and (C) Nintendo 1996-2012.                                 --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
 /*--                                                                        --*/
 /*--  The custom code written here is licensed under the terms of the GPL:  --*/
 /*--                                                                        --*/
@@ -27,9 +28,8 @@ package com.dabomstew.pkrandom;
 /*----------------------------------------------------------------------------*/
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.zip.CRC32;
-
-import javax.xml.bind.DatatypeConverter;
 
 public class SettingsUpdater {
 
@@ -47,7 +47,7 @@ public class SettingsUpdater {
      * @return The updated config string to be applied
      */
     public String update(int oldVersion, String configString) {
-        byte[] data = DatatypeConverter.parseBase64Binary(configString);
+        byte[] data = Base64.getDecoder().decode(configString);
         this.dataBlock = new byte[200];
         this.actualDataLength = data.length;
         System.arraycopy(data, 0, this.dataBlock, 0, this.actualDataLength);
@@ -241,6 +241,36 @@ public class SettingsUpdater {
             insertExtraByte(35, (byte) 50); // 50 in the settings file = +0% after adjustment
         }
 
+        if (oldVersion < 300) {
+
+            // wild level modifier
+            insertExtraByte(38, (byte) 50);
+
+            // exp curve modifier
+            insertExtraByte(39, (byte) 1);
+        }
+
+        if (oldVersion < 311) {
+
+            // double battle mode + boss/important extra pokemon
+            insertExtraByte(40, (byte) 0);
+
+            // regular extra pokemon + aura mod
+            insertExtraByte(41, (byte) 8);
+
+            // Totem/Ally mod + totem items/alt formes
+            insertExtraByte(42, (byte) 9);
+
+            // totem level modifier
+            insertExtraByte(43, (byte) 50);
+
+            // base stat generation
+            insertExtraByte(44, (byte) 0);
+
+            // move generation
+            insertExtraByte(45, (byte) 0);
+        }
+
         // fix checksum
         CRC32 checksum = new CRC32();
         checksum.update(dataBlock, 0, actualDataLength - 8);
@@ -252,7 +282,7 @@ public class SettingsUpdater {
         // have to make a new byte array to convert to base64
         byte[] finalConfigString = new byte[actualDataLength];
         System.arraycopy(dataBlock, 0, finalConfigString, 0, actualDataLength);
-        return DatatypeConverter.printBase64Binary(finalConfigString);
+        return Base64.getEncoder().encodeToString(finalConfigString);
     }
 
     private static byte getRemappedByte(byte old, int[] oldIndexes) {

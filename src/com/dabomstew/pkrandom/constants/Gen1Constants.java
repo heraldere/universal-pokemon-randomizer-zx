@@ -1,6 +1,31 @@
 package com.dabomstew.pkrandom.constants;
 
+/*----------------------------------------------------------------------------*/
+/*--  Gen1Constants.java - Constants for Red/Green/Blue/Yellow              --*/
+/*--                                                                        --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
+/*--  Pokemon and any associated names and the like are                     --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
+/*--                                                                        --*/
+/*--  The custom code written here is licensed under the terms of the GPL:  --*/
+/*--                                                                        --*/
+/*--  This program is free software: you can redistribute it and/or modify  --*/
+/*--  it under the terms of the GNU General Public License as published by  --*/
+/*--  the Free Software Foundation, either version 3 of the License, or     --*/
+/*--  (at your option) any later version.                                   --*/
+/*--                                                                        --*/
+/*--  This program is distributed in the hope that it will be useful,       --*/
+/*--  but WITHOUT ANY WARRANTY; without even the implied warranty of        --*/
+/*--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          --*/
+/*--  GNU General Public License for more details.                          --*/
+/*--                                                                        --*/
+/*--  You should have received a copy of the GNU General Public License     --*/
+/*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
+/*----------------------------------------------------------------------------*/
+
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.dabomstew.pkrandom.pokemon.ItemList;
@@ -38,12 +63,12 @@ public class Gen1Constants {
 
     public static final List<Integer> fieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100);
 
-    public static final List<Integer> earlyRequiredHMs = Arrays.asList(15);
+    public static final List<Integer> earlyRequiredHMs = Collections.singletonList(15);
 
     public static final int hmsStartIndex = 0xC4, tmsStartIndex = 0xC9;
 
-    public static final List<Integer> requiredFieldTMs = Arrays.asList(new Integer[] { 3, 4, 8, 10, 12, 14, 16, 19, 20,
-            22, 25, 26, 30, 40, 43, 44, 45, 47 });
+    public static final List<Integer> requiredFieldTMs = Arrays.asList(3, 4, 8, 10, 12, 14, 16, 19, 20,
+            22, 25, 26, 30, 40, 43, 44, 45, 47);
 
     public static final int towerMapsStartIndex = 0x90, towerMapsEndIndex = 0x94;
 

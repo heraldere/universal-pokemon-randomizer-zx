@@ -1,7 +1,30 @@
 package com.dabomstew.pkrandom.constants;
 
-import java.util.Arrays;
-import java.util.List;
+/*----------------------------------------------------------------------------*/
+/*--  Gen3Constants.java - Constants for Ruby/Sapphire/FR/LG/Emerald        --*/
+/*--                                                                        --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
+/*--  Pokemon and any associated names and the like are                     --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
+/*--                                                                        --*/
+/*--  The custom code written here is licensed under the terms of the GPL:  --*/
+/*--                                                                        --*/
+/*--  This program is free software: you can redistribute it and/or modify  --*/
+/*--  it under the terms of the GNU General Public License as published by  --*/
+/*--  the Free Software Foundation, either version 3 of the License, or     --*/
+/*--  (at your option) any later version.                                   --*/
+/*--                                                                        --*/
+/*--  This program is distributed in the hope that it will be useful,       --*/
+/*--  but WITHOUT ANY WARRANTY; without even the implied warranty of        --*/
+/*--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          --*/
+/*--  GNU General Public License for more details.                          --*/
+/*--                                                                        --*/
+/*--  You should have received a copy of the GNU General Public License     --*/
+/*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
+/*----------------------------------------------------------------------------*/
+
+import java.util.*;
 
 import com.dabomstew.pkrandom.pokemon.ItemList;
 import com.dabomstew.pkrandom.pokemon.Trainer;
@@ -40,6 +63,9 @@ public class Gen3Constants {
     public static final String rsPokemonPalettesPointerPrefix = "04D90148006817E0";
 
     public static final String rsPokemonPalettesPointerSuffix = "080C064A11404840";
+
+    private static final String runningShoesCheckPrefixRS = "0440002C1DD08620", runningShoesCheckPrefixFRLG = "02200540002D29D0",
+            runningShoesCheckPrefixE = "0640002E1BD08C20";
 
     public static final int efrlgPokemonNamesPointer = 0x144, efrlgMoveNamesPointer = 0x148,
             efrlgAbilityNamesPointer = 0x1C0, efrlgItemDataPointer = 0x1C8, efrlgMoveDataPointer = 0x1CC,
@@ -139,27 +165,42 @@ public class Gen3Constants {
 
     public static final int highestAbilityIndex = 77;
 
+    public static final Map<Integer,List<Integer>> abilityVariations = setupAbilityVariations();
+
+    private static Map<Integer,List<Integer>> setupAbilityVariations() {
+        Map<Integer,List<Integer>> map = new HashMap<>();
+        map.put(15,Arrays.asList(15,72)); // Insomnia/Vital Spirit
+        map.put(29,Arrays.asList(29,73)); // Clear Body/White Smoke
+        map.put(37,Arrays.asList(37,74)); // Huge Power/Pure Power
+        map.put(4,Arrays.asList(4,75)); // Battle Armor/Shell Armor
+        map.put(43,Arrays.asList(43,76)); // Soundproof/Cacophony
+        map.put(13,Arrays.asList(13,77)); // Cloud Nine/Air Lock
+
+        return map;
+    }
+
     public static final int frlgMapLabelsStart = 0x58;
 
-    public static final List<Integer> rsRequiredFieldTMs = Arrays.asList(new Integer[] { 1, 2, 6, 7, 11, 18, 22, 23,
-            26, 30, 37, 48 });
+    public static final List<Integer> rsRequiredFieldTMs = Arrays.asList(1, 2, 6, 7, 11, 18, 22, 23,
+            26, 30, 37, 48);
 
-    public static final List<Integer> eRequiredFieldTMs = Arrays.asList(new Integer[] { 2, 6, 7, 11, 18, 22, 23, 30,
-            37, 48 });
+    public static final List<Integer> eRequiredFieldTMs = Arrays.asList(2, 6, 7, 11, 18, 22, 23, 30,
+            37, 48);
 
-    public static final List<Integer> frlgRequiredFieldTMs = Arrays.asList(new Integer[] { 1, 2, 7, 8, 9, 11, 12, 14,
-            17, 18, 21, 22, 25, 32, 36, 37, 40, 41, 44, 46, 47, 48, 49, 50 });
+    public static final List<Integer> frlgRequiredFieldTMs = Arrays.asList(1, 2, 7, 8, 9, 11, 12, 14,
+            17, 18, 21, 22, 25, 32, 36, 37, 40, 41, 44, 46, 47, 48, 49, 50);
 
     public static final List<Integer> rseFieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 127, 249, 230, 291,
             290);
 
     public static final List<Integer> frlgFieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 127, 249, 230);
 
-    public static final List<Integer> rseEarlyRequiredHMMoves = Arrays.asList(249);
+    public static final List<Integer> rseEarlyRequiredHMMoves = Collections.singletonList(249);
 
-    public static final List<Integer> frlgEarlyRequiredHMMoves = Arrays.asList(15);
+    public static final List<Integer> frlgEarlyRequiredHMMoves = Collections.singletonList(15);
     
     public static final int luckyEggIndex = 0xC5;
+
 
     private static Type[] constructTypeTable() {
         Type[] table = new Type[256];
@@ -228,6 +269,16 @@ public class Gen3Constants {
     }
 
     public static ItemList allowedItems, nonBadItems;
+
+    public static String getRunningShoesCheckPrefix(int romType) {
+        if (romType == Gen3Constants.RomType_Ruby || romType == Gen3Constants.RomType_Sapp) {
+            return runningShoesCheckPrefixRS;
+        } else if (romType == Gen3Constants.RomType_FRLG) {
+            return runningShoesCheckPrefixFRLG;
+        } else {
+            return runningShoesCheckPrefixE;
+        }
+    }
 
     static {
         setupAllowedItems();

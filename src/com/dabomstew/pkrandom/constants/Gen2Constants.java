@@ -1,6 +1,31 @@
 package com.dabomstew.pkrandom.constants;
 
+/*----------------------------------------------------------------------------*/
+/*--  Gen2Constants.java - Constants for Gold/Silver/Crystal                --*/
+/*--                                                                        --*/
+/*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
+/*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
+/*--  Pokemon and any associated names and the like are                     --*/
+/*--  trademark and (C) Nintendo 1996-2020.                                 --*/
+/*--                                                                        --*/
+/*--  The custom code written here is licensed under the terms of the GPL:  --*/
+/*--                                                                        --*/
+/*--  This program is free software: you can redistribute it and/or modify  --*/
+/*--  it under the terms of the GNU General Public License as published by  --*/
+/*--  the Free Software Foundation, either version 3 of the License, or     --*/
+/*--  (at your option) any later version.                                   --*/
+/*--                                                                        --*/
+/*--  This program is distributed in the hope that it will be useful,       --*/
+/*--  but WITHOUT ANY WARRANTY; without even the implied warranty of        --*/
+/*--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          --*/
+/*--  GNU General Public License for more details.                          --*/
+/*--                                                                        --*/
+/*--  You should have received a copy of the GNU General Public License     --*/
+/*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
+/*----------------------------------------------------------------------------*/
+
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.dabomstew.pkrandom.pokemon.ItemList;
@@ -49,15 +74,15 @@ public class Gen2Constants {
 
     public static final int mapGroupCount = 26, mapsInLastGroup = 11;
 
-    public static final List<Integer> requiredFieldTMs = Arrays.asList(new Integer[] { 4, 20, 22, 26, 28, 34, 35, 39,
-            40, 43, 44, 46 });
+    public static final List<Integer> requiredFieldTMs = Arrays.asList(4, 20, 22, 26, 28, 34, 35, 39,
+            40, 43, 44, 46);
 
     public static final List<Integer> fieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 250, 127, 249, 29, 230);
 
-    public static final List<Integer> earlyRequiredHMMoves = Arrays.asList(15);
+    public static final List<Integer> earlyRequiredHMMoves = Collections.singletonList(15);
 
     // ban thief from levelup moves
-    public static final List<Integer> bannedLevelupMoves = Arrays.asList(168);
+    public static final List<Integer> bannedLevelupMoves = Collections.singletonList(168);
 
     public static final List<Integer> brokenMoves = Arrays.asList(49, 82, 32, 90, 12);
 
