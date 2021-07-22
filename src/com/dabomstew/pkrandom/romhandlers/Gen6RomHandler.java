@@ -23,13 +23,8 @@ package com.dabomstew.pkrandom.romhandlers;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
-import com.dabomstew.pkrandom.FileFunctions;
-import com.dabomstew.pkrandom.GFXFunctions;
-import com.dabomstew.pkrandom.MiscTweak;
-import com.dabomstew.pkrandom.RomFunctions;
-import com.dabomstew.pkrandom.constants.Gen5Constants;
-import com.dabomstew.pkrandom.constants.Gen6Constants;
-import com.dabomstew.pkrandom.constants.GlobalConstants;
+import com.dabomstew.pkrandom.*;
+import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.ctr.AMX;
 import com.dabomstew.pkrandom.ctr.GARCArchive;
 import com.dabomstew.pkrandom.ctr.Mini;
@@ -278,7 +273,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         }
 
         allowedItems = Gen6Constants.getAllowedItems(romEntry.romType).copy();
-        nonBadItems = Gen6Constants.nonBadItems.copy();
+        nonBadItems = Gen6Constants.getNonBadItems(romEntry.romType).copy();
     }
 
     private void loadPokemonStats() {
@@ -355,6 +350,9 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         pkmn.ability1 = stats[Gen6Constants.bsAbility1Offset] & 0xFF;
         pkmn.ability2 = stats[Gen6Constants.bsAbility2Offset] & 0xFF;
         pkmn.ability3 = stats[Gen6Constants.bsAbility3Offset] & 0xFF;
+        if (pkmn.ability1 == pkmn.ability2) {
+            pkmn.ability2 = 0;
+        }
 
         // Held Items?
         int item1 = FileFunctions.read2ByteInt(stats, Gen6Constants.bsCommonHeldItemOffset);
@@ -381,13 +379,13 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                     for (int i = 1; i < formeCount; i++) {
                         altFormes.put(firstFormeOffset + i - 1,new FormeInfo(pkmn.number,i,FileFunctions.read2ByteInt(stats,Gen6Constants.bsFormeSpriteOffset))); // Assumes that formes are in memory in the same order as their numbers
                         if (Gen6Constants.actuallyCosmeticForms.contains(firstFormeOffset+i-1)) {
-                            if (pkmn.number != 25 && pkmn.number != 421) { // No Pikachu/Cherrim
+                            if (pkmn.number != Species.pikachu && pkmn.number != Species.cherrim) { // No Pikachu/Cherrim
                                 pkmn.cosmeticForms += 1;
                             }
                         }
                     }
                 } else {
-                    if (pkmn.number != 493 && pkmn.number != 649 && pkmn.number != 716) {
+                    if (pkmn.number != Species.arceus && pkmn.number != Species.genesect && pkmn.number != Species.xerneas) {
                         // Reason for exclusions:
                         // Arceus/Genesect: to avoid confusion
                         // Xerneas: Should be handled automatically?
@@ -441,12 +439,11 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 }
                 // Nincada's Shedinja evo is hardcoded into the game's executable, so
                 // if the Pokemon is Nincada, then let's put it as one of its evolutions
-                if (pk.number == 290) {
-                    Pokemon shedinja = pokes[292];
+                if (pk.number == Species.nincada) {
+                    Pokemon shedinja = pokes[Species.shedinja];
                     Evolution evol = new Evolution(pk, shedinja, false, EvolutionType.LEVEL_IS_EXTRA, 20);
-                    evol.forme = -1;
-                    evol.level = 20;
                     pk.evolutionsFrom.add(evol);
+                    shedinja.evolutionsTo.add(evol);
                 }
 
                 // Split evos shouldn't carry stats unless the evo is Nincada's
@@ -555,7 +552,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 moves[i].type = Gen6Constants.typeTable[moveData[0] & 0xFF];
                 moves[i].category = Gen6Constants.moveCategoryIndices[moveData[2] & 0xFF];
 
-                if (i == GlobalConstants.SWIFT_INDEX) {
+                if (i == Moves.swift) {
                     perfectAccuracy = (int)moves[i].hitratio;
                 }
 
@@ -563,7 +560,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                     moves[i].hitCount = 19 / 6.0;
                 } else if (GlobalConstants.doubleHitMoves.contains(i)) {
                     moves[i].hitCount = 2;
-                } else if (i == GlobalConstants.TRIPLE_KICK_INDEX) {
+                } else if (i == Moves.tripleKick) {
                     moves[i].hitCount = 2.71; // this assumes the first hit lands
                 }
             }
@@ -664,8 +661,10 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             for (int i = 1; i <= Gen6Constants.pokemonCount + Gen6Constants.getFormeCount(romEntry.romType); i++) {
                 byte[] evoEntry = evoGARC.files.get(i).get(0);
                 Pokemon pk = pokes[i];
-                if (pk.number == 290) {
+                if (pk.number == Species.nincada) {
                     writeShedinjaEvolution();
+                } else if (pk.number == Species.feebas && romEntry.romType == Gen6Constants.Type_ORAS) {
+                    recreateFeebasBeautyEvolution();
                 }
                 int evosWritten = 0;
                 for (Evolution evo : pk.evolutionsFrom) {
@@ -691,7 +690,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     private void writeShedinjaEvolution() throws IOException {
-        Pokemon nincada = pokes[290];
+        Pokemon nincada = pokes[Species.nincada];
 
         // When the "Limit Pokemon" setting is enabled, we clear out the evolutions of
         // everything *not* in the pool, which could include Nincada. In that case,
@@ -758,7 +757,27 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         // Now that we've handled the hardcoded Shedinja evolution, delete it so that
         // we do *not* handle it in WriteEvolutions
         nincada.evolutionsFrom.remove(1);
+        extraEvolution.evolutionsTo.remove(0);
         writeFile(romEntry.getString("Evolution"), evolutionCRO);
+    }
+
+    private void recreateFeebasBeautyEvolution() {
+        Pokemon feebas = pokes[Species.feebas];
+
+        // When the "Limit Pokemon" setting is enabled, we clear out the evolutions of
+        // everything *not* in the pool, which could include Feebas. In that case,
+        // there's no point in even worrying about its evolutions, so just return.
+        if (feebas.evolutionsFrom.size() == 0) {
+            return;
+        }
+
+        Evolution prismScaleEvo = feebas.evolutionsFrom.get(0);
+        Pokemon feebasEvolution = prismScaleEvo.to;
+        int beautyNeededToEvolve = 170;
+        Evolution beautyEvolution = new Evolution(feebas, feebasEvolution, true,
+                EvolutionType.LEVEL_HIGH_BEAUTY, beautyNeededToEvolve);
+        feebas.evolutionsFrom.add(beautyEvolution);
+        feebasEvolution.evolutionsTo.add(beautyEvolution);
     }
 
     private void saveMoves() {
@@ -1071,7 +1090,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             }
             EncounterSet roughTerrainEncounters = readEncounter(encounterData, 192, 12);
             if (roughTerrainEncounters.encounters.size() > 0) {
-                roughTerrainEncounters.displayName = mapName + " Rough Terrain";
+                roughTerrainEncounters.displayName = mapName + " Rough Terrain/Tall Grass";
                 encounters.add(roughTerrainEncounters);
             }
 
@@ -1409,6 +1428,8 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
 
         // Save
         writeFile(romEntry.getString("Field"), fieldCRO);
+
+        this.updatePokedexAreaDataXY(encounterGarc, fieldCRO);
     }
 
     private void setEncountersORAS(List<EncounterSet> encountersList) throws IOException {
@@ -1491,12 +1512,150 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
 
         // Save
         writeGARC(encountersFile, encounterGarc);
+
+        this.updatePokedexAreaDataORAS(encounterGarc);
+    }
+
+    private void updatePokedexAreaDataXY(GARCArchive encounterGarc, byte[] fieldCRO) throws IOException {
+        byte[] pokedexAreaData = new byte[(Gen6Constants.pokemonCount + 1) * Gen6Constants.perPokemonAreaDataLengthXY];
+        for (int i = 0; i < pokedexAreaData.length; i += Gen6Constants.perPokemonAreaDataLengthXY) {
+            // This byte is 0x10 for *every* Pokemon. Why? No clue, but let's copy it.
+            pokedexAreaData[i + 133] = 0x10;
+        }
+        int currentMapNum = 0;
+
+        // Read all the "normal" encounters in the encounters GARC.
+        for (int i = 0; i < encounterGarc.files.size() - 1; i++) {
+            byte[] b = encounterGarc.files.get(i).get(0);
+            int offset = FileFunctions.readFullIntLittleEndian(b, 0x10) + 0x10;
+            int length = b.length - offset;
+            if (length < 0x178) { // No encounters in this map
+                continue;
+            }
+            int areaIndex = Gen6Constants.xyMapNumToPokedexIndex[currentMapNum];
+            byte[] encounterData = new byte[0x178];
+            System.arraycopy(b, offset, encounterData, 0, 0x178);
+
+            EncounterSet grassEncounters = readEncounter(encounterData, 0, 12);
+            updatePokedexAreaDataFromEncounterSet(grassEncounters, pokedexAreaData, areaIndex, 0x1);
+            EncounterSet yellowFlowerEncounters = readEncounter(encounterData, 48, 12);
+            updatePokedexAreaDataFromEncounterSet(yellowFlowerEncounters, pokedexAreaData, areaIndex, 0x2);
+            EncounterSet purpleFlowerEncounters = readEncounter(encounterData, 96, 12);
+            updatePokedexAreaDataFromEncounterSet(purpleFlowerEncounters, pokedexAreaData, areaIndex, 0x4);
+            EncounterSet redFlowerEncounters = readEncounter(encounterData, 144, 12);
+            updatePokedexAreaDataFromEncounterSet(redFlowerEncounters, pokedexAreaData, areaIndex, 0x8);
+            EncounterSet roughTerrainEncounters = readEncounter(encounterData, 192, 12);
+            updatePokedexAreaDataFromEncounterSet(roughTerrainEncounters, pokedexAreaData, areaIndex, 0x10);
+            EncounterSet surfEncounters = readEncounter(encounterData, 240, 5);
+            updatePokedexAreaDataFromEncounterSet(surfEncounters, pokedexAreaData, areaIndex, 0x20);
+            EncounterSet rockSmashEncounters = readEncounter(encounterData, 260, 5);
+            updatePokedexAreaDataFromEncounterSet(rockSmashEncounters, pokedexAreaData, areaIndex, 0x40);
+            EncounterSet oldRodEncounters = readEncounter(encounterData, 280, 3);
+            updatePokedexAreaDataFromEncounterSet(oldRodEncounters, pokedexAreaData, areaIndex, 0x80);
+            EncounterSet goodRodEncounters = readEncounter(encounterData, 292, 3);
+            updatePokedexAreaDataFromEncounterSet(goodRodEncounters, pokedexAreaData, areaIndex, 0x100);
+            EncounterSet superRodEncounters = readEncounter(encounterData, 304, 3);
+            updatePokedexAreaDataFromEncounterSet(superRodEncounters, pokedexAreaData, areaIndex, 0x200);
+            EncounterSet hordeCommonEncounters = readEncounter(encounterData, 316, 5);
+            updatePokedexAreaDataFromEncounterSet(hordeCommonEncounters, pokedexAreaData, areaIndex, 0x400);
+            EncounterSet hordeUncommonEncounters = readEncounter(encounterData, 336, 5);
+            updatePokedexAreaDataFromEncounterSet(hordeUncommonEncounters, pokedexAreaData, areaIndex, 0x400);
+            EncounterSet hordeRareEncounters = readEncounter(encounterData, 356, 5);
+            updatePokedexAreaDataFromEncounterSet(hordeRareEncounters, pokedexAreaData, areaIndex, 0x400);
+            currentMapNum++;
+        }
+
+        // Now read all the stuff that's hardcoded in the Field CRO
+        for (int i = 0; i < Gen6Constants.fallingEncounterCount; i++) {
+            int areaIndex = Gen6Constants.xyMapNumToPokedexIndex[currentMapNum];
+            int offset = Gen6Constants.fallingEncounterOffset + i * Gen6Constants.fieldEncounterSize;
+            EncounterSet fallingEncounter = readFieldEncounter(fieldCRO, offset);
+            updatePokedexAreaDataFromEncounterSet(fallingEncounter, pokedexAreaData, areaIndex, 0x800);
+            currentMapNum++;
+        }
+        for (int i = 0; i < Gen6Constants.rustlingBushEncounterCount; i++) {
+            int areaIndex = Gen6Constants.xyMapNumToPokedexIndex[currentMapNum];
+            int offset = Gen6Constants.rustlingBushEncounterOffset + i * Gen6Constants.fieldEncounterSize;
+            EncounterSet rustlingBushEncounter = readFieldEncounter(fieldCRO, offset);
+            updatePokedexAreaDataFromEncounterSet(rustlingBushEncounter, pokedexAreaData, areaIndex, 0x800);
+            currentMapNum++;
+        }
+
+        // Write out the newly-created area data to the GARC
+        GARCArchive pokedexAreaGarc = readGARC(romEntry.getString("PokedexAreaData"), true);
+        pokedexAreaGarc.setFile(0, pokedexAreaData);
+        writeGARC(romEntry.getString("PokedexAreaData"), pokedexAreaGarc);
+    }
+
+    private void updatePokedexAreaDataORAS(GARCArchive encounterGarc) throws IOException {
+        byte[] pokedexAreaData = new byte[(Gen6Constants.pokemonCount + 1) * Gen6Constants.perPokemonAreaDataLengthORAS];
+        int currentMapNum = 0;
+        for (int i = 0; i < encounterGarc.files.size() - 2; i++) {
+            byte[] b = encounterGarc.files.get(i).get(0);
+            int offset = FileFunctions.readFullIntLittleEndian(b, 0x10) + 0xE;
+            int offset2 = FileFunctions.readFullIntLittleEndian(b, 0x14);
+            int length = offset2 - offset;
+            if (length < 0xF6) { // No encounters in this map
+                continue;
+            }
+            int areaIndex = Gen6Constants.orasMapNumToPokedexIndex[currentMapNum];
+            if (areaIndex == -1) { // Current encounters are not taken into account for the Pokedex
+                currentMapNum++;
+                continue;
+            }
+            byte[] encounterData = new byte[0xF6];
+            System.arraycopy(b, offset, encounterData, 0, 0xF6);
+
+            EncounterSet grassEncounters = readEncounter(encounterData, 0, 12);
+            updatePokedexAreaDataFromEncounterSet(grassEncounters, pokedexAreaData, areaIndex, 0x1);
+            EncounterSet longGrassEncounters = readEncounter(encounterData, 48, 12);
+            updatePokedexAreaDataFromEncounterSet(longGrassEncounters, pokedexAreaData, areaIndex, 0x2);
+            int foreignEncounterType = grassEncounters.encounters.size() > 0 ? 0x04 : 0x08;
+            EncounterSet dexNavForeignEncounters = readEncounter(encounterData, 96, 3);
+            updatePokedexAreaDataFromEncounterSet(dexNavForeignEncounters, pokedexAreaData, areaIndex, foreignEncounterType);
+            EncounterSet surfEncounters = readEncounter(encounterData, 108, 5);
+            updatePokedexAreaDataFromEncounterSet(surfEncounters, pokedexAreaData, areaIndex, 0x10);
+            EncounterSet rockSmashEncounters = readEncounter(encounterData, 128, 5);
+            updatePokedexAreaDataFromEncounterSet(rockSmashEncounters, pokedexAreaData, areaIndex, 0x20);
+            EncounterSet oldRodEncounters = readEncounter(encounterData, 148, 3);
+            updatePokedexAreaDataFromEncounterSet(oldRodEncounters, pokedexAreaData, areaIndex, 0x40);
+            EncounterSet goodRodEncounters = readEncounter(encounterData, 160, 3);
+            updatePokedexAreaDataFromEncounterSet(goodRodEncounters, pokedexAreaData, areaIndex, 0x80);
+            EncounterSet superRodEncounters = readEncounter(encounterData, 172, 3);
+            updatePokedexAreaDataFromEncounterSet(superRodEncounters, pokedexAreaData, areaIndex, 0x100);
+            EncounterSet hordeCommonEncounters = readEncounter(encounterData, 184, 5);
+            updatePokedexAreaDataFromEncounterSet(hordeCommonEncounters, pokedexAreaData, areaIndex, 0x200);
+            EncounterSet hordeUncommonEncounters = readEncounter(encounterData, 204, 5);
+            updatePokedexAreaDataFromEncounterSet(hordeUncommonEncounters, pokedexAreaData, areaIndex, 0x200);
+            EncounterSet hordeRareEncounters = readEncounter(encounterData, 224, 5);
+            updatePokedexAreaDataFromEncounterSet(hordeRareEncounters, pokedexAreaData, areaIndex, 0x200);
+            currentMapNum++;
+        }
+
+        GARCArchive pokedexAreaGarc = readGARC(romEntry.getString("PokedexAreaData"), true);
+        pokedexAreaGarc.setFile(0, pokedexAreaData);
+        writeGARC(romEntry.getString("PokedexAreaData"), pokedexAreaGarc);
+    }
+
+    private void updatePokedexAreaDataFromEncounterSet(EncounterSet es, byte[] pokedexAreaData, int areaIndex, int encounterType) {
+        for (Encounter enc : es.encounters) {
+            Pokemon pkmn = enc.pokemon;
+            while (pkmn.baseForme != null) { // Failsafe if we need to write encounters without modifying species
+                pkmn = pkmn.baseForme;
+            }
+            int perPokemonAreaDataLength = romEntry.romType == Gen6Constants.Type_XY ?
+                    Gen6Constants.perPokemonAreaDataLengthXY : Gen6Constants.perPokemonAreaDataLengthORAS;
+            int offset = pkmn.number * perPokemonAreaDataLength + areaIndex * 4;
+            int value = FileFunctions.readFullIntLittleEndian(pokedexAreaData, offset);
+            value |= encounterType;
+            FileFunctions.writeFullIntLittleEndian(pokedexAreaData, offset, value);
+        }
     }
 
     private void writeEncounter(byte[] data, int offset, List<Encounter> encounters) {
         for (int i = 0; i < encounters.size(); i++) {
             Encounter encounter = encounters.get(i);
-            if (encounter.pokemon.formeNumber > 0) { // Failsafe if we need to write encounters without modifying species
+            while (encounter.pokemon.baseForme != null) { // Failsafe if we need to write encounters without modifying species
                 encounter.pokemon = encounter.pokemon.baseForme;
             }
             int speciesAndFormeData = (encounter.formeNumber << 11) + encounter.pokemon.number;
@@ -1509,7 +1668,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     private void writeFieldEncounter(byte[] data, int offset, List<Encounter> encounters) {
         for (int i = 0; i < encounters.size(); i++) {
             Encounter encounter = encounters.get(i);
-            if (encounter.pokemon.formeNumber > 0) { // Failsafe if we need to write encounters without modifying species
+            while (encounter.pokemon.baseForme != null) { // Failsafe if we need to write encounters without modifying species
                 encounter.pokemon = encounter.pokemon.baseForme;
             }
             writeWord(data, offset + 4 + i * 8, encounter.pokemon.number);
@@ -1552,6 +1711,22 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 tnamesMap.put(i,tnames.get(i));
             }
             for (int i = 1; i < trainernum; i++) {
+                // Trainer entries are 20 bytes in X/Y, 24 bytes in ORAS
+                // Team flags; 1 byte; 0x01 = custom moves, 0x02 = held item
+                // [ORAS only] 1 byte unused
+                // Class; 1 byte
+                // [ORAS only] 1 byte unknown
+                // [ORAS only] 2 bytes unused
+                // Battle Mode; 1 byte; 0=single, 1=double, 2=triple, 3=rotation, 4=???
+                // Number of pokemon in team; 1 byte
+                // Items; 2 bytes each, 4 item slots
+                // AI Flags; 2 byte
+                // 3 bytes not used
+                // Victory Money; 1 byte; The money given out after defeat =
+                //         4 * this value * highest level poke in party
+                // Victory Item; 2 bytes; The item given out after defeat.
+                //         In X/Y, these are berries, nuggets, pearls (e.g. Battle Chateau)
+                //         In ORAS, none of these are set.
                 byte[] trainer = trainers.files.get(i).get(0);
                 byte[] trpoke = trpokes.files.get(i).get(0);
                 Trainer tr = new Trainer();
@@ -1561,7 +1736,6 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 int offset = isORAS ? 6 : 2;
                 int battleType = trainer[offset] & 0xFF;
                 int numPokes = trainer[offset+1] & 0xFF;
-                int trainerAILevel = trainer[offset+9] & 0xFF;
                 boolean healer = trainer[offset+13] != 0;
                 int pokeOffs = 0;
                 String trainerClass = tclasses.get(tr.trainerclass);
@@ -1570,36 +1744,49 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
 
                 for (int poke = 0; poke < numPokes; poke++) {
                     // Structure is
-                    // IV SB LV LV SP SP FRM FRM
+                    // ST SB LV LV SP SP FRM FRM
                     // (HI HI)
                     // (M1 M1 M2 M2 M3 M3 M4 M4)
-                    // where SB = 0 0 Ab Ab 0 0 Fm Ml
-                    // Ab Ab = ability number, 0 for random
-                    // Fm = 1 for forced female
-                    // Ml = 1 for forced male
+                    // ST (strength) corresponds to the IVs of a trainer's pokemon.
+                    //   In ORAS, this value is like previous gens, a number 0-255
+                    //   to represent 0 to 31 IVs. In the vanilla games, the top
+                    //   leaders/champions have 29.
+                    //   In X/Y, the bottom 5 bits are the IVs. It is unknown what
+                    //   the top 3 bits correspond to, perhaps EV spread?
+                    // The second byte, SB = 0 0 Ab Ab 0 0 Fm Ml
+                    //   Ab Ab = ability number, 0 for random
+                    //   Fm = 1 for forced female
+                    //   Ml = 1 for forced male
                     // There's also a trainer flag to force gender, but
                     // this allows fixed teams with mixed genders.
 
-                    // int secondbyte = trpoke[pokeOffs + 1] & 0xFF;
                     int level = readWord(trpoke, pokeOffs + 2);
                     int species = readWord(trpoke, pokeOffs + 4);
                     int formnum = readWord(trpoke, pokeOffs + 6);
                     TrainerPokemon tpk = new TrainerPokemon();
                     tpk.level = level;
                     tpk.pokemon = pokes[species];
-                    tpk.AILevel = trainerAILevel;
-                    tpk.ability = trpoke[pokeOffs + 1] & 0xFF;
+                    tpk.strength = trpoke[pokeOffs];
+                    if (isORAS) {
+                        tpk.IVs = (tpk.strength * 31 / 255);
+                    } else {
+                        tpk.IVs = tpk.strength & 0x1F;
+                    }
+                    int abilityAndFlag = trpoke[pokeOffs + 1];
+                    tpk.abilitySlot = (abilityAndFlag >>> 4) & 0xF;
+                    tpk.forcedGenderFlag = (abilityAndFlag & 0xF);
                     tpk.forme = formnum;
                     tpk.formeSuffix = Gen6Constants.getFormeSuffixByBaseForme(species,formnum);
                     tpk.absolutePokeNumber = absolutePokeNumByBaseForme
                             .getOrDefault(species,dummyAbsolutePokeNums)
                             .getOrDefault(formnum,species);
                     pokeOffs += 8;
-                    if ((tr.poketype & 2) == 2) {
+                    if (tr.pokemonHaveItems()) {
                         tpk.heldItem = readWord(trpoke, pokeOffs);
                         pokeOffs += 2;
+                        tpk.hasMegaStone = Gen6Constants.isMegaStone(tpk.heldItem);
                     }
-                    if ((tr.poketype & 1) == 1) {
+                    if (tr.pokemonHaveCustomMoves()) {
                         int attack1 = readWord(trpoke, pokeOffs);
                         int attack2 = readWord(trpoke, pokeOffs + 2);
                         int attack3 = readWord(trpoke, pokeOffs + 4);
@@ -1616,10 +1803,10 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             }
             if (romEntry.romType == Gen6Constants.Type_XY) {
                 Gen6Constants.tagTrainersXY(allTrainers);
-                Gen6Constants.setCouldBeMultiBattleXY(allTrainers);
+                Gen6Constants.setMultiBattleStatusXY(allTrainers);
             } else {
                 Gen6Constants.tagTrainersORAS(allTrainers);
-                Gen6Constants.setCouldBeMultiBattleORAS(allTrainers);
+                Gen6Constants.setMultiBattleStatusORAS(allTrainers);
             }
         } catch (IOException ex) {
             throw new RandomizerIOException(ex);
@@ -1672,10 +1859,10 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 }
 
                 int bytesNeeded = 8 * numPokes;
-                if ((tr.poketype & 1) == 1) {
+                if (tr.pokemonHaveCustomMoves()) {
                     bytesNeeded += 8 * numPokes;
                 }
-                if ((tr.poketype & 2) == 2) {
+                if (tr.pokemonHaveItems()) {
                     bytesNeeded += 2 * numPokes;
                 }
                 byte[] trpoke = new byte[bytesNeeded];
@@ -1683,17 +1870,18 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 Iterator<TrainerPokemon> tpokes = tr.pokemon.iterator();
                 for (int poke = 0; poke < numPokes; poke++) {
                     TrainerPokemon tp = tpokes.next();
-                    trpoke[pokeOffs] = (byte) tp.AILevel;
-                    // no gender or ability info, so no byte 1
+                    byte abilityAndFlag = (byte)((tp.abilitySlot << 4) | tp.forcedGenderFlag);
+                    trpoke[pokeOffs] = (byte) tp.strength;
+                    trpoke[pokeOffs + 1] = abilityAndFlag;
                     writeWord(trpoke, pokeOffs + 2, tp.level);
                     writeWord(trpoke, pokeOffs + 4, tp.pokemon.number);
                     writeWord(trpoke, pokeOffs + 6, tp.forme);
                     pokeOffs += 8;
-                    if ((tr.poketype & 2) == 2) {
+                    if (tr.pokemonHaveItems()) {
                         writeWord(trpoke, pokeOffs, tp.heldItem);
                         pokeOffs += 2;
                     }
-                    if ((tr.poketype & 1) == 1) {
+                    if (tr.pokemonHaveCustomMoves()) {
                         if (tp.resetMoves) {
                             int[] pokeMoves = RomFunctions.getMovesAtLevel(tp.absolutePokeNumber, movesets, tp.level);
                             for (int m = 0; m < 4; m++) {
@@ -2052,6 +2240,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         available |= MiscTweak.FASTEST_TEXT.getValue();
         available |= MiscTweak.BAN_LUCKY_EGG.getValue();
         available |= MiscTweak.RETAIN_ALT_FORMES.getValue();
+        available |= MiscTweak.NATIONAL_DEX_AT_START.getValue();
         return available;
     }
 
@@ -2068,6 +2257,8 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else if (tweak == MiscTweak.NATIONAL_DEX_AT_START) {
+            patchForNationalDex();
         }
     }
 
@@ -2087,6 +2278,70 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
             code[offset + 1] = 0x50;
             code[offset + 2] = (byte) 0xA0;
             code[offset + 3] = (byte) 0xE3;
+        }
+    }
+
+    private void patchForNationalDex() {
+        int offset = find(code, Gen6Constants.nationalDexFunctionLocator);
+        if (offset > 0) {
+            // In Savedata::ZukanData::GetZenkokuZukanFlag, we load a flag into r0 and
+            // then AND it with 0x1 to get a boolean that determines if the player has
+            // the National Dex. The below code patches this piece of code so that
+            // instead of loading the flag, we simply "mov r0, #0x1".
+            code[offset] = 0x01;
+            code[offset + 1] = 0x00;
+            code[offset + 2] = (byte) 0xA0;
+            code[offset + 3] = (byte) 0xE3;
+        }
+
+        if (romEntry.romType == Gen6Constants.Type_XY) {
+            offset = find(code, Gen6Constants.xyGetDexFlagFunctionLocator);
+            if (offset > 0) {
+                // In addition to the code listed above, XY also use a function that I'm
+                // calling Savedata::ZukanData::GetDexFlag(int) to determine what Pokedexes
+                // the player owns. It can be called with 0 (Central), 1 (Coastal), 2 (Mountain),
+                // or 3 (National). Since the player *always* has the Central Dex, the code has
+                // a short-circuit for it that looks like this:
+                // cmp r5, #0x0
+                // moveq r0, #0x1
+                // beq returnFromFunction
+                // The below code nops out that comparison and makes the move and branch instructions
+                // non-conditional; no matter what's on the save file, the player will have all dexes.
+                FileFunctions.writeFullIntLittleEndian(code, offset, 0);
+                code[offset + 7] = (byte) 0xE3;
+                code[offset + 11] = (byte) 0xEA;
+            }
+        } else {
+            // DllSangoZukan.cro will refuse to let you open either the Hoenn or National Pokedex if you have
+            // caught 0 Pokemon in the Hoenn Pokedex; it is unknown *how* it does this, though. Instead, let's
+            // just hack up the function that determines how many Pokemon in the Hoenn Pokedex you've caught so
+            // it returns 1 if you haven't caught anything.
+            offset = find(code, Gen6Constants.orasGetHoennDexCaughtFunctionPrefix);
+            if (offset > 0) {
+                offset += Gen6Constants.orasGetHoennDexCaughtFunctionPrefix.length() / 2; // because it was a prefix
+
+                // At the start of the function, there's a check that the Zukan block on the save data is valid;
+                // this is obviously generated by either a macro or inlined function, since literally every function
+                // relating to the Pokedex has this too. First, it checks if the checksum is correct then does a beq
+                // to branch to the main body of the function; let's replace this with an unconditional branch.
+                code[offset + 31] = (byte) 0xEA;
+
+                // Now, in the space where the function would normally handle the call to the assert function
+                // to crash the game if the checksum is invalid, we can write the following code:
+                // mov r0, r7
+                // cmp r0, #0x0
+                // moveq r0, #0x1
+                // ldmia sp!,{r4 r5 r6 r7 r8 r9 r10 r11 r12 pc}
+                FileFunctions.writeFullInt(code, offset + 32, 0x0700A0E1);
+                FileFunctions.writeFullInt(code, offset + 36, 0x000050E3);
+                FileFunctions.writeFullInt(code, offset + 40, 0x0100A003);
+                FileFunctions.writeFullInt(code, offset + 44, 0xF09FBDE8);
+
+                // At the end of the function, the game normally does "mov r0, r7" and then returns, where r7
+                // contains the number of Pokemon caught in the Hoenn Pokedex. Instead, branch to the code we
+                // wrote above.
+                FileFunctions.writeFullInt(code, offset + 208, 0xD2FFFFEA);
+            }
         }
     }
 
@@ -2392,6 +2647,31 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
+    public boolean hasMainGameLegendaries() {
+        return true;
+    }
+
+    @Override
+    public List<Integer> getMainGameLegendaries() {
+        return Arrays.stream(romEntry.arrayEntries.get("MainGameLegendaries")).boxed().collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Integer> getSpecialMusicStatics() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void applyCorrectStaticMusic(Map<Integer, Integer> specialMusicStaticChanges) {
+
+    }
+
+    @Override
+    public boolean hasStaticMusicFix() {
+        return false;
+    }
+
+    @Override
     public List<TotemPokemon> getTotemPokemon() {
         return new ArrayList<>();
     }
@@ -2402,9 +2682,10 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public void removeImpossibleEvolutions(boolean changeMoveEvos) {
+    public void removeImpossibleEvolutions(Settings settings) {
+        boolean changeMoveEvos = !(settings.getMovesetsMod() == Settings.MovesetsMod.UNCHANGED);
+
         Map<Integer, List<MoveLearnt>> movesets = this.getMovesLearnt();
-        log("--Removing Impossible Evolutions--");
         Set<Evolution> extraEvolutions = new HashSet<>();
         for (Pokemon pkmn : pokes) {
             if (pkmn != null) {
@@ -2427,29 +2708,29 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                         // change to pure level evo
                         evo.type = EvolutionType.LEVEL;
                         evo.extraInfo = levelLearntAt;
-                        logEvoChangeLevel(evo.from.fullName(), evo.to.fullName(), levelLearntAt);
+                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
                     }
                     // Pure Trade
                     if (evo.type == EvolutionType.TRADE) {
                         // Replace w/ level 37
                         evo.type = EvolutionType.LEVEL;
                         evo.extraInfo = 37;
-                        logEvoChangeLevel(evo.from.fullName(), evo.to.fullName(), 37);
+                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
                     }
                     // Trade w/ Item
                     if (evo.type == EvolutionType.TRADE_ITEM) {
                         // Get the current item & evolution
                         int item = evo.extraInfo;
-                        if (evo.from.number == Gen6Constants.slowpokeIndex) {
+                        if (evo.from.number == Species.slowpoke) {
                             // Slowpoke is awkward - he already has a level evo
                             // So we can't do Level up w/ Held Item for him
                             // Put Water Stone instead
                             evo.type = EvolutionType.STONE;
                             evo.extraInfo = Gen6Constants.waterStoneIndex; // water
                             // stone
-                            logEvoChangeStone(evo.from.fullName(), evo.to.fullName(), itemNames.get(Gen6Constants.waterStoneIndex));
+                            addEvoUpdateStone(impossibleEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
                         } else {
-                            logEvoChangeLevelWithItem(evo.from.fullName(), evo.to.fullName(), itemNames.get(item));
+                            addEvoUpdateHeldItem(impossibleEvolutionUpdates, evo, itemNames.get(item));
                             // Replace, for this entry, w/
                             // Level up w/ Held Item at Day
                             evo.type = EvolutionType.LEVEL_ITEM_DAY;
@@ -2466,11 +2747,8 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                         // (22)
                         // Based on what species we're currently dealing with
                         evo.type = EvolutionType.LEVEL_WITH_OTHER;
-                        evo.extraInfo = (evo.from.number == Gen6Constants.karrablastIndex ? Gen6Constants.shelmetIndex
-                                : Gen6Constants.karrablastIndex);
-                        logEvoChangeLevelWithPkmn(evo.from.fullName(), evo.to.fullName(),
-                                pokes[(evo.from.number == Gen6Constants.karrablastIndex ? Gen6Constants.shelmetIndex
-                                        : Gen6Constants.karrablastIndex)].fullName());
+                        evo.extraInfo = (evo.from.number == Species.karrablast ? Species.shelmet : Species.karrablast);
+                        addEvoUpdateParty(impossibleEvolutionUpdates, evo, pokes[evo.extraInfo].fullName());
                     }
                     // TBD: Pancham, Sliggoo? Sylveon?
                 }
@@ -2481,11 +2759,13 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 }
             }
         }
-        logBlankLine();
+
     }
 
     @Override
-    public void makeEvolutionsEasier(boolean wildsRandomized) {
+    public void makeEvolutionsEasier(Settings settings) {
+        boolean wildsRandomized = !settings.getWildPokemonMod().equals(Settings.WildPokemonMod.UNCHANGED);
+
         if (wildsRandomized) {
             for (Pokemon pkmn : pokes) {
                 if (pkmn != null) {
@@ -2494,68 +2774,71 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                             // Replace w/ level 35
                             evo.type = EvolutionType.LEVEL;
                             evo.extraInfo = 35;
-                            log(String.format("%s now evolves into %s at minimum level %d", evo.from.fullName(), evo.to.fullName(),
-                                    evo.extraInfo));
+                            addEvoUpdateCondensed(easierEvolutionUpdates, evo, false);
                         }
                     }
                 }
             }
-            logBlankLine();
         }
     }
 
     @Override
     public void removeTimeBasedEvolutions() {
-        log("--Removing Timed-Based Evolutions--");
         Set<Evolution> extraEvolutions = new HashSet<>();
         for (Pokemon pkmn : pokes) {
             if (pkmn != null) {
                 extraEvolutions.clear();
                 for (Evolution evo : pkmn.evolutionsFrom) {
                     if (evo.type == EvolutionType.HAPPINESS_DAY) {
-                        if (evo.from.number == Gen6Constants.eeveeIndex) {
+                        if (evo.from.number == Species.eevee) {
                             // We can't set Eevee to evolve into Espeon with happiness at night because that's how
                             // Umbreon works in the original game. Instead, make Eevee: == sun stone => Espeon
                             evo.type = EvolutionType.STONE;
                             evo.extraInfo = Gen6Constants.sunStoneIndex;
-                            logEvoChangeStone(evo.from.fullName(), evo.to.fullName(), itemNames.get(Gen6Constants.sunStoneIndex));
+                            addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
                         } else {
                             // Add an extra evo for Happiness at Night
-                            logEvoChangeHappiness(evo.from.fullName(), evo.to.fullName());
+                            addEvoUpdateHappiness(timeBasedEvolutionUpdates, evo);
                             Evolution extraEntry = new Evolution(evo.from, evo.to, true,
                                     EvolutionType.HAPPINESS_NIGHT, 0);
                             extraEvolutions.add(extraEntry);
                         }
                     } else if (evo.type == EvolutionType.HAPPINESS_NIGHT) {
-                        if (evo.from.number == Gen6Constants.eeveeIndex) {
+                        if (evo.from.number == Species.eevee) {
                             // We can't set Eevee to evolve into Umbreon with happiness at day because that's how
                             // Espeon works in the original game. Instead, make Eevee: == moon stone => Umbreon
                             evo.type = EvolutionType.STONE;
                             evo.extraInfo = Gen6Constants.moonStoneIndex;
-                            logEvoChangeStone(evo.from.fullName(), evo.to.fullName(), itemNames.get(Gen6Constants.moonStoneIndex));
+                            addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
                         } else {
                             // Add an extra evo for Happiness at Day
-                            logEvoChangeHappiness(evo.from.fullName(), evo.to.fullName());
+                            addEvoUpdateHappiness(timeBasedEvolutionUpdates, evo);
                             Evolution extraEntry = new Evolution(evo.from, evo.to, true,
                                     EvolutionType.HAPPINESS_DAY, 0);
                             extraEvolutions.add(extraEntry);
                         }
                     } else if (evo.type == EvolutionType.LEVEL_ITEM_DAY) {
                         int item = evo.extraInfo;
-                        // Add an extra evo for Level w/ Item During Night
-                        logEvoChangeLevelWithItem(evo.from.fullName(), evo.to.fullName(), itemNames.get(item));
-                        Evolution extraEntry = new Evolution(evo.from, evo.to, true,
-                                EvolutionType.LEVEL_ITEM_NIGHT, item);
-                        extraEvolutions.add(extraEntry);
+                        // Make sure we don't already have an evo for the same item at night (e.g., when using Change Impossible Evos)
+                        if (evo.from.evolutionsFrom.stream().noneMatch(e -> e.type == EvolutionType.LEVEL_ITEM_NIGHT && e.extraInfo == item)) {
+                            // Add an extra evo for Level w/ Item During Night
+                            addEvoUpdateHeldItem(timeBasedEvolutionUpdates, evo, itemNames.get(item));
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.LEVEL_ITEM_NIGHT, item);
+                            extraEvolutions.add(extraEntry);
+                        }
                     } else if (evo.type == EvolutionType.LEVEL_ITEM_NIGHT) {
                         int item = evo.extraInfo;
-                        // Add an extra evo for Level w/ Item During Day
-                        logEvoChangeLevelWithItem(evo.from.fullName(), evo.to.fullName(), itemNames.get(item));
-                        Evolution extraEntry = new Evolution(evo.from, evo.to, true,
-                                EvolutionType.LEVEL_ITEM_DAY, item);
-                        extraEvolutions.add(extraEntry);
+                        // Make sure we don't already have an evo for the same item at day (e.g., when using Change Impossible Evos)
+                        if (evo.from.evolutionsFrom.stream().noneMatch(e -> e.type == EvolutionType.LEVEL_ITEM_DAY && e.extraInfo == item)) {
+                            // Add an extra evo for Level w/ Item During Day
+                            addEvoUpdateHeldItem(timeBasedEvolutionUpdates, evo, itemNames.get(item));
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.LEVEL_ITEM_DAY, item);
+                            extraEvolutions.add(extraEntry);
+                        }
                     } else if (evo.type == EvolutionType.LEVEL_DAY || evo.type == EvolutionType.LEVEL_NIGHT) {
-                        logEvoChangeLevel(evo.from.fullName(), evo.to.fullName(), evo.extraInfo);
+                        addEvoUpdateLevel(timeBasedEvolutionUpdates, evo);
                         evo.type = EvolutionType.LEVEL;
                     }
                 }
@@ -2565,7 +2848,7 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                 }
             }
         }
-        logBlankLine();
+
     }
 
     @Override
@@ -2680,8 +2963,101 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public void applySignature() {
-        // For now, do nothing.
+    public void randomizeIntroPokemon() {
+
+        if (romEntry.romType == Gen6Constants.Type_XY) {
+
+            // Pick a random Pokemon, including formes
+
+            Pokemon introPokemon = randomPokemonInclFormes();
+            while (introPokemon.actuallyCosmetic) {
+                introPokemon = randomPokemonInclFormes();
+            }
+            int introPokemonNum = introPokemon.number;
+            int introPokemonForme = 0;
+            boolean checkCosmetics = true;
+            if (introPokemon.formeNumber > 0) {
+                introPokemonForme = introPokemon.formeNumber;
+                introPokemonNum = introPokemon.baseForme.number;
+                checkCosmetics = false;
+            }
+            if (checkCosmetics && introPokemon.cosmeticForms > 0) {
+                introPokemonForme = introPokemon.getCosmeticFormNumber(this.random.nextInt(introPokemon.cosmeticForms));
+            } else if (!checkCosmetics && introPokemon.cosmeticForms > 0) {
+                introPokemonForme += introPokemon.getCosmeticFormNumber(this.random.nextInt(introPokemon.cosmeticForms));
+            }
+
+            // Find the value for the Pokemon's cry
+
+            int baseAddr = find(code, Gen6Constants.criesTablePrefixXY);
+            baseAddr += Gen6Constants.criesTablePrefixXY.length() / 2;
+
+            int pkNumKey = introPokemonNum;
+
+            if (introPokemonForme != 0) {
+                int extraOffset = readLong(code, baseAddr + (pkNumKey * 0x14));
+                pkNumKey = extraOffset + (introPokemonForme - 1);
+            }
+
+            int initialCry = readLong(code, baseAddr + (pkNumKey * 0x14) + 0x4);
+            int repeatedCry = readLong(code, baseAddr + (pkNumKey * 0x14) + 0x10);
+
+            // Write to DLLIntro.cro
+            try {
+                byte[] introCRO = readFile(romEntry.getString("Intro"));
+
+                // Replace the Pokemon model that's loaded, and set its forme
+
+                int croModelOffset = find(introCRO, Gen6Constants.introPokemonModelOffsetXY);
+                croModelOffset += Gen6Constants.introPokemonModelOffsetXY.length() / 2;
+
+                writeWord(introCRO, croModelOffset, introPokemonNum);
+                introCRO[croModelOffset + 2] = (byte)introPokemonForme;
+
+                // Shiny chance
+                if (this.random.nextInt(256) == 0) {
+                    introCRO[croModelOffset + 4] = 1;
+                }
+
+                // Replace the initial cry when the Pokemon exits the ball
+                // First, re-point two branches
+
+                int croInitialCryOffset1 = find(introCRO, Gen6Constants.introInitialCryOffset1XY);
+                croInitialCryOffset1 += Gen6Constants.introInitialCryOffset1XY.length() / 2;
+
+                introCRO[croInitialCryOffset1] = 0x5E;
+
+                int croInitialCryOffset2 = find(introCRO, Gen6Constants.introInitialCryOffset2XY);
+                croInitialCryOffset2 += Gen6Constants.introInitialCryOffset2XY.length() / 2;
+
+                introCRO[croInitialCryOffset2] = 0x2F;
+
+                // Then change the parameters that are loaded for a function call, and also change the function call
+                // itself to a function that uses the "cry value" instead of Pokemon ID + forme + emotion (same function
+                // that is used for the repeated cries)
+
+                int croInitialCryOffset3 = find(introCRO, Gen6Constants.introInitialCryOffset3XY);
+                croInitialCryOffset3 += Gen6Constants.introInitialCryOffset3XY.length() / 2;
+
+                writeLong(introCRO, croInitialCryOffset3, 0xE1A02000);  // cpy r2,r0
+                writeLong(introCRO, croInitialCryOffset3 + 0x4, 0xE59F100C);    // ldr r1,=#CRY_VALUE
+                writeLong(introCRO, croInitialCryOffset3 + 0x8, 0xE58D0000);    // str r0,[sp]
+                writeLong(introCRO, croInitialCryOffset3 + 0xC, 0xEBFFFDE9);    // bl FUN_006a51d4
+                writeLong(introCRO, croInitialCryOffset3 + 0x10, readLong(introCRO, croInitialCryOffset3 + 0x14)); // Move these two instructions up four bytes
+                writeLong(introCRO, croInitialCryOffset3 + 0x14, readLong(introCRO, croInitialCryOffset3 + 0x18));
+                writeLong(introCRO, croInitialCryOffset3 + 0x18, initialCry);   // CRY_VALUE pool
+
+                // Replace the repeated cry that the Pokemon does while standing around
+                // Just replace a pool value
+                int croRepeatedCryOffset = find(introCRO, Gen6Constants.introRepeatedCryOffsetXY);
+                croRepeatedCryOffset += Gen6Constants.introRepeatedCryOffsetXY.length() / 2;
+                writeLong(introCRO, croRepeatedCryOffset, repeatedCry);
+
+                writeFile(romEntry.getString("Intro"), introCRO);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -2692,6 +3068,11 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     @Override
     public ItemList getNonBadItems() {
         return nonBadItems;
+    }
+
+    @Override
+    public List<Integer> getUniqueNoSellItems() {
+        return Gen6Constants.uniqueNoSellItems;
     }
 
     @Override
@@ -2722,6 +3103,25 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     @Override
     public Map<Integer, List<Integer>> getAbilityVariations() {
         return Gen5Constants.abilityVariations;
+    }
+
+    @Override
+    public List<Integer> getUselessAbilities() {
+        return new ArrayList<>(Gen6Constants.uselessAbilities);
+    }
+
+    @Override
+    public int getAbilityForTrainerPokemon(TrainerPokemon tp) {
+        // Before randomizing Trainer Pokemon, one possible value for abilitySlot is 0,
+        // which represents "Either Ability 1 or 2". During randomization, we make sure to
+        // to set abilitySlot to some non-zero value, but if you call this method without
+        // randomization, then you'll hit this case.
+        if (tp.abilitySlot < 1 || tp.abilitySlot > 3) {
+            return 0;
+        }
+
+        List<Integer> abilityList = Arrays.asList(tp.pokemon.ability1, tp.pokemon.ability2, tp.pokemon.ability3);
+        return abilityList.get(tp.abilitySlot - 1);
     }
 
     @Override
@@ -2858,11 +3258,31 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                     }
                 }
             }
+
+            // In ORAS, it's possible to encounter the sparkling Mega Stone items on the field
+            // before you finish the game. Thus, we want to randomize them as well.
+            if (romEntry.romType == Gen6Constants.Type_ORAS) {
+                List<Integer> fieldMegaStones = this.getFieldMegaStonesORAS(scriptGarc);
+                fieldItems.addAll(fieldMegaStones);
+            }
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
 
         return fieldItems;
+    }
+
+    private List<Integer> getFieldMegaStonesORAS(GARCArchive scriptGarc) throws IOException {
+        List<Integer> fieldMegaStones = new ArrayList<>();
+        int megaStoneItemScriptFile = romEntry.getInt("MegaStoneItemScriptNumber");
+        byte[] megaStoneItemEventBytes = scriptGarc.getFile(megaStoneItemScriptFile);
+        AMX megaStoneItemEvent = new AMX(megaStoneItemEventBytes);
+        for (int i = 0; i < Gen6Constants.megastoneTableLengthORAS; i++) {
+            int offset = Gen6Constants.megastoneTableStartingOffsetORAS + (i * Gen6Constants.megastoneTableEntrySizeORAS);
+            int item = FileFunctions.read2ByteInt(megaStoneItemEvent.decData, offset);
+            fieldMegaStones.add(item);
+        }
+        return fieldMegaStones;
     }
 
     public void setFieldItems(List<Integer> items) {
@@ -2901,6 +3321,30 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
                         FileFunctions.write2ByteInt(code,offsHidden + (i * 0xE) + 2, item);
                     }
                 }
+            }
+
+            // Sparkling Mega Stone items for ORAS only
+            if (romEntry.romType == Gen6Constants.Type_ORAS) {
+                List<Integer> fieldMegaStones = this.getFieldMegaStonesORAS(scriptGarc);
+                Map<Integer, Integer> megaStoneMap = new HashMap<>();
+                int megaStoneItemScriptFile = romEntry.getInt("MegaStoneItemScriptNumber");
+                byte[] megaStoneItemEventBytes = scriptGarc.getFile(megaStoneItemScriptFile);
+                AMX megaStoneItemEvent = new AMX(megaStoneItemEventBytes);
+                for (int i = 0; i < Gen6Constants.megastoneTableLengthORAS; i++) {
+                    int offset = Gen6Constants.megastoneTableStartingOffsetORAS + (i * Gen6Constants.megastoneTableEntrySizeORAS);
+                    int oldItem = fieldMegaStones.get(i);
+                    int newItem = iterItems.next();
+                    if (megaStoneMap.containsKey(oldItem)) {
+                        // There are some duplicate entries for certain Mega Stones, and we're not quite sure why.
+                        // Set them to the same item for sanity's sake.
+                        int replacementItem = megaStoneMap.get(oldItem);
+                        FileFunctions.write2ByteInt(megaStoneItemEvent.decData, offset, replacementItem);
+                    } else {
+                        FileFunctions.write2ByteInt(megaStoneItemEvent.decData, offset, newItem);
+                        megaStoneMap.put(oldItem, newItem);
+                    }
+                }
+                scriptGarc.setFile(megaStoneItemScriptFile, megaStoneItemEvent.getBytes());
             }
 
             writeGARC(romEntry.getString("Scripts"),scriptGarc);
@@ -3149,11 +3593,6 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
     }
 
     @Override
-    public int randomHeldItem() {
-        return 0;
-    }
-
-    @Override
     public BufferedImage getMascotImage() {
         try {
             GARCArchive pokespritesGARC = this.readGARC(romEntry.getString("PokemonGraphics"),false);
@@ -3199,5 +3638,102 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
+    }
+
+    @Override
+    public List<Integer> getAllHeldItems() {
+        return Gen6Constants.allHeldItems;
+    }
+
+    @Override
+    public List<Integer> getAllConsumableHeldItems() {
+        return Gen6Constants.consumableHeldItems;
+    }
+
+    @Override
+    public List<Integer> getSensibleHeldItemsFor(TrainerPokemon tp, boolean consumableOnly, List<Move> moves, Map<Integer, List<MoveLearnt>> movesets) {
+        List<Integer> items = new ArrayList<>();
+        items.addAll(Gen6Constants.generalPurposeConsumableItems);
+        int frequencyBoostCount = 6; // Make some very good items more common, but not too common
+        if (!consumableOnly) {
+            frequencyBoostCount = 8; // bigger to account for larger item pool.
+            items.addAll(Gen6Constants.generalPurposeItems);
+        }
+        int[] pokeMoves = RomFunctions.getMovesAtLevel(tp.pokemon.number, movesets, tp.level);
+        int numDamagingMoves = 0;
+        for (int moveIdx : pokeMoves) {
+            Move move = moves.get(moveIdx);
+            if (move == null) {
+                continue;
+            }
+            if (move.category == MoveCategory.PHYSICAL) {
+                numDamagingMoves++;
+                items.add(Gen4Constants.liechiBerry);
+                items.add(Gen6Constants.consumableTypeBoostingItems.get(move.type));
+                if (!consumableOnly) {
+                    items.addAll(Gen6Constants.typeBoostingItems.get(move.type));
+                    items.add(Gen4Constants.choiceBand);
+                    items.add(Gen4Constants.muscleBand);
+                }
+            }
+            if (move.category == MoveCategory.SPECIAL) {
+                numDamagingMoves++;
+                items.add(Gen4Constants.petayaBerry);
+                items.add(Gen6Constants.consumableTypeBoostingItems.get(move.type));
+                if (!consumableOnly) {
+                    items.addAll(Gen6Constants.typeBoostingItems.get(move.type));
+                    items.add(Gen4Constants.wiseGlasses);
+                    items.add(Gen4Constants.choiceSpecs);
+                }
+            }
+            if (!consumableOnly && Gen6Constants.moveBoostingItems.containsKey(moveIdx)) {
+                items.addAll(Gen6Constants.moveBoostingItems.get(moveIdx));
+            }
+        }
+        if (numDamagingMoves >= 2) {
+            items.add(Gen6Constants.assaultVest);
+        }
+        Map<Type, Effectiveness> byType = Effectiveness.against(tp.pokemon.primaryType, tp.pokemon.secondaryType, 6);
+        for(Map.Entry<Type, Effectiveness> entry : byType.entrySet()) {
+            Integer berry = Gen6Constants.weaknessReducingBerries.get(entry.getKey());
+            if (entry.getValue() == Effectiveness.DOUBLE) {
+                items.add(berry);
+            } else if (entry.getValue() == Effectiveness.QUADRUPLE) {
+                for (int i = 0; i < frequencyBoostCount; i++) {
+                    items.add(berry);
+                }
+            }
+        }
+        if (byType.get(Type.NORMAL) == Effectiveness.NEUTRAL) {
+            items.add(Gen4Constants.chilanBerry);
+        }
+
+        int ability = this.getAbilityForTrainerPokemon(tp);
+        if (ability == Abilities.levitate) {
+            items.removeAll(Arrays.asList(Gen4Constants.shucaBerry));
+        } else if (byType.get(Type.GROUND) == Effectiveness.DOUBLE || byType.get(Type.GROUND) == Effectiveness.QUADRUPLE) {
+            items.add(Gen5Constants.airBalloon);
+        }
+
+        if (!consumableOnly) {
+            if (Gen6Constants.abilityBoostingItems.containsKey(ability)) {
+                items.addAll(Gen6Constants.abilityBoostingItems.get(ability));
+            }
+            if (tp.pokemon.primaryType == Type.POISON || tp.pokemon.secondaryType == Type.POISON) {
+                items.add(Gen4Constants.blackSludge);
+            }
+            List<Integer> speciesItems = Gen6Constants.speciesBoostingItems.get(tp.pokemon.number);
+            if (speciesItems != null) {
+                for (int i = 0; i < frequencyBoostCount; i++) {
+                    items.addAll(speciesItems);
+                }
+            }
+            if (!tp.pokemon.evolutionsFrom.isEmpty() && tp.level >= 20) {
+                // eviolite can be too good for early game, so we gate it behind a minimum level.
+                // We go with the same level as the option for "No early wonder guard".
+                items.add(Gen5Constants.eviolite);
+            }
+        }
+        return items;
     }
 }

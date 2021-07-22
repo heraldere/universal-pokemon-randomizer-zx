@@ -39,6 +39,8 @@ public class Gen5Constants {
     public static final int Type_BW = 0;
     public static final int Type_BW2 = 1;
 
+    public static final int arm9Offset = 0x02004000;
+
     public static final int pokemonCount = 649, moveCount = 559, nonUnovaPokemonCount = 493;
     private static final int bw1FormeCount = 18, bw2FormeCount = 24;
     private static final int bw1formeOffset = 0, bw2formeOffset = 35;
@@ -85,9 +87,16 @@ public class Gen5Constants {
     public static final int w2Route4EncounterFile = 105, w2VRExclusiveRoom1 = 78, w2VRExclusiveRoom2 = 79,
             w2ReversalMountainStart = 55, w2ReversalMountainEnd = 60;
 
-    public static final int[] bw2HiddenHollowUnovaPokemon = { 505, 507, 510, 511, 513, 515, 519, 523, 525, 527, 529,
-            531, 533, 535, 538, 539, 542, 545, 546, 548, 550, 553, 556, 558, 559, 561, 564, 569, 572, 575, 578, 580,
-            583, 587, 588, 594, 596, 601, 605, 607, 610, 613, 616, 618, 619, 621, 622, 624, 626, 628, 630, 631, 632, };
+    public static final List<Integer> bw2HiddenHollowUnovaPokemon = Arrays.asList(Species.watchog, Species.herdier, Species.liepard,
+            Species.pansage, Species.pansear, Species.panpour, Species.pidove, Species.zebstrika, Species.boldore,
+            Species.woobat, Species.drilbur, Species.audino, Species.gurdurr, Species.tympole, Species.throh,
+            Species.sawk, Species.leavanny, Species.scolipede, Species.cottonee, Species.petilil, Species.basculin,
+            Species.krookodile, Species.maractus, Species.crustle, Species.scraggy, Species.sigilyph, Species.tirtouga,
+            Species.garbodor, Species.minccino, Species.gothorita, Species.duosion, Species.ducklett, Species.vanillish,
+            Species.emolga, Species.karrablast, Species.alomomola, Species.galvantula, Species.klinklang, Species.elgyem,
+            Species.litwick, Species.axew, Species.cubchoo, Species.shelmet, Species.stunfisk, Species.mienfoo,
+            Species.druddigon, Species.golett, Species.pawniard, Species.bouffalant, Species.braviary, Species.mandibuzz,
+            Species.heatmor, Species.durant);
 
     public static final String tmDataPrefix = "87038803";
 
@@ -101,8 +110,6 @@ public class Gen5Constants {
 
     public static final int evolutionMethodCount = 27;
 
-    public static final int slowpokeIndex = 79, eeveeIndex = 133, karrablastIndex = 588, shelmetIndex = 616;
-
     public static final int sunStoneIndex = 80, moonStoneIndex = 81, waterStoneIndex = 84;
 
     public static final int highestAbilityIndex = 164;
@@ -114,17 +121,19 @@ public class Gen5Constants {
 
     private static Map<Integer,List<Integer>> setupAbilityVariations() {
         Map<Integer,List<Integer>> map = new HashMap<>();
-        map.put(15,Arrays.asList(15,72)); // Insomnia/Vital Spirit
-        map.put(29,Arrays.asList(29,73)); // Clear Body/White Smoke
-        map.put(37,Arrays.asList(37,74)); // Huge Power/Pure Power
-        map.put(4,Arrays.asList(4,75)); // Battle Armor/Shell Armor
-        map.put(13,Arrays.asList(13,76)); // Cloud Nine/Air Lock
-        map.put(111,Arrays.asList(111,116)); // Filter/Solid Rock
-        map.put(24,Arrays.asList(24,160)); // Rough Skin/Iron Barbs
-        map.put(104,Arrays.asList(104,163,164)); // Mold Breaker/Turboblaze/Teravolt
+        map.put(Abilities.insomnia, Arrays.asList(Abilities.insomnia, Abilities.vitalSpirit));
+        map.put(Abilities.clearBody, Arrays.asList(Abilities.clearBody, Abilities.whiteSmoke));
+        map.put(Abilities.hugePower, Arrays.asList(Abilities.hugePower, Abilities.purePower));
+        map.put(Abilities.battleArmor, Arrays.asList(Abilities.battleArmor, Abilities.shellArmor));
+        map.put(Abilities.cloudNine, Arrays.asList(Abilities.cloudNine, Abilities.airLock));
+        map.put(Abilities.filter, Arrays.asList(Abilities.filter, Abilities.solidRock));
+        map.put(Abilities.roughSkin, Arrays.asList(Abilities.roughSkin, Abilities.ironBarbs));
+        map.put(Abilities.moldBreaker, Arrays.asList(Abilities.moldBreaker, Abilities.turboblaze, Abilities.teravolt));
 
         return map;
     }
+
+    public static final List<Integer> uselessAbilities = Arrays.asList(Abilities.forecast, Abilities.multitype, Abilities.zenMode);
 
     public static final int normalItemSetVarCommand = 0x28, hiddenItemSetVarCommand = 0x2A, normalItemVarSet = 0x800C,
             hiddenItemVarSet = 0x8000;
@@ -318,14 +327,121 @@ public class Gen5Constants {
             22, 26, 28, 29, 30, 36, 39, 41, 46, 47, 50, 52, 53, 56, 58, 61, 63, 65, 66, 67, 69, 71, 80, 81, 84, 85, 86,
             90, 91, 92, 93);
 
-    public static final List<Integer> bw1EarlyRequiredHMMoves = Collections.singletonList(15);
+    public static final List<Integer> bw1EarlyRequiredHMMoves = Collections.singletonList(Moves.cut);
 
-    @SuppressWarnings("unchecked")
-    public static final List<Integer> bw2EarlyRequiredHMMoves = Collections.EMPTY_LIST;
+    public static final List<Integer> bw2EarlyRequiredHMMoves = Collections.emptyList();
 
-    public static final List<Integer> fieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 127, 230, 291);
+    public static final List<Integer> fieldMoves = Arrays.asList(
+            Moves.cut, Moves.fly, Moves.surf, Moves.strength, Moves.flash, Moves.dig, Moves.teleport,
+            Moves.waterfall, Moves.sweetScent, Moves.dive);
 
     public static final String shedinjaFunctionLocator = "F8B582B0061C30680F1C";
+
+    private static final int bw1FieldOverlayNumber = 21, bw2FieldOverlayNumber = 36;
+    public static final String runningShoesPrefix = "01D0012008BD002008BD63";
+
+    public static final String introGraphicPrefix = "5A0000010000001700000001000000", bw1IntroCryPrefix = "0021009101910291", bw2IntroCryLocator = "3D020000F8B51C1C";
+
+    public static final String typeEffectivenessTableLocator = "0404040404020400";
+
+    // https://bulbapedia.bulbagarden.net/wiki/List_of_items_by_index_number_(Generation_V)
+    // Held items we randomize from Gen 5 are a superset of the held items from Gen 4. Thus, we list only the
+    // new ones here.
+    // New consumable held items.
+    public static final int airBalloon = 0x21d, redCard = 0x21e, absorbBulb = 0x221, cellBattery = 0x222,
+            ejectButton = 0x223, fireGem = 0x224, waterGem = 0x225, electricGem = 0x226, grassGem = 0x227,
+            iceGem = 0x228, fightingGem = 0x229, poisonGem = 0x22a, groundGem = 0x22b, flyingGem = 0x22c,
+            psychicGem = 0x22d, bugGem = 0x22e, rockGem = 0x22f, ghostGem = 0x230, dragonGem = 0x231,
+            darkGem = 0x232, steelGem = 0x233, normalGem = 0x234;
+    // New non-consumable held items with in-battle NPC effect (not specific to one pokemon family or one move)
+    public static final int eviolite = 0x21a, floatStone = 0x21b, rockyHelmet = 0x21c, ringTarget = 0x21f,
+            bindingBand = 0x220;
+
+    public static final List<Integer> consumableHeldItems = setupAllConsumableItems();
+
+    private static List<Integer> setupAllConsumableItems() {
+        List<Integer> list = new ArrayList<>(Gen4Constants.consumableHeldItems);
+        list.addAll(Arrays.asList(airBalloon, redCard, absorbBulb, cellBattery, ejectButton, fireGem, waterGem,
+                electricGem, grassGem, iceGem, fightingGem, poisonGem, groundGem, flyingGem, psychicGem, bugGem,
+                rockGem, ghostGem, dragonGem, darkGem, steelGem, normalGem));
+        return Collections.unmodifiableList(list);
+    }
+
+    public static final List<Integer> allHeldItems = setupAllHeldItems();
+
+    private static List<Integer> setupAllHeldItems() {
+        List<Integer> list = new ArrayList<>(Gen4Constants.allHeldItems);
+        list.addAll(Arrays.asList(airBalloon, redCard, absorbBulb, cellBattery, ejectButton, fireGem, waterGem,
+                electricGem, grassGem, iceGem, fightingGem, poisonGem, groundGem, flyingGem, psychicGem, bugGem,
+                rockGem, ghostGem, dragonGem, darkGem, steelGem, normalGem));
+        list.addAll(Arrays.asList(eviolite, floatStone, rockyHelmet, ringTarget, bindingBand));
+        return Collections.unmodifiableList(list);
+    }
+
+    public static final List<Integer> generalPurposeConsumableItems = initializeGeneralPurposeConsumableItems();
+
+    private static List<Integer> initializeGeneralPurposeConsumableItems() {
+        List<Integer> list = new ArrayList<>(Gen4Constants.generalPurposeConsumableItems);
+        list.addAll(Arrays.asList(redCard, absorbBulb, cellBattery, ejectButton));
+        return Collections.unmodifiableList(list);
+    }
+
+    public static final List<Integer> generalPurposeItems = initializeGeneralPurposeItems();
+
+    private static List<Integer> initializeGeneralPurposeItems() {
+        List<Integer> list = new ArrayList<>(Gen4Constants.generalPurposeItems);
+        list.addAll(Arrays.asList(floatStone, rockyHelmet));
+        return Collections.unmodifiableList(list);
+    }
+
+    public static final Map<Type, Integer> consumableTypeBoostingItems = initializeConsumableTypeBoostingItems();
+
+    private static Map<Type, Integer> initializeConsumableTypeBoostingItems() {
+        Map<Type, Integer> map = new HashMap<>();
+        map.put(Type.FIRE, fireGem);
+        map.put(Type.WATER, waterGem);
+        map.put(Type.ELECTRIC, electricGem);
+        map.put(Type.GRASS, grassGem);
+        map.put(Type.ICE, iceGem);
+        map.put(Type.FIGHTING, fightingGem);
+        map.put(Type.POISON, poisonGem);
+        map.put(Type.GROUND, groundGem);
+        map.put(Type.FLYING, flyingGem);
+        map.put(Type.PSYCHIC, psychicGem);
+        map.put(Type.BUG, bugGem);
+        map.put(Type.ROCK, rockGem);
+        map.put(Type.GHOST, ghostGem);
+        map.put(Type.DRAGON, dragonGem);
+        map.put(Type.DARK, darkGem);
+        map.put(Type.STEEL, steelGem);
+        map.put(Type.NORMAL, normalGem);
+        return Collections.unmodifiableMap(map);
+    }
+
+    public static final Map<Integer, List<Integer>> moveBoostingItems = initializeMoveBoostingItems();
+
+    private static Map<Integer, List<Integer>> initializeMoveBoostingItems() {
+        Map<Integer, List<Integer>> map = new HashMap<>(Gen4Constants.moveBoostingItems);
+        map.put(Moves.trick, Arrays.asList(Gen4Constants.toxicOrb, Gen4Constants.flameOrb, ringTarget));
+        map.put(Moves.switcheroo, Arrays.asList(Gen4Constants.toxicOrb, Gen4Constants.flameOrb, ringTarget));
+
+        map.put(Moves.bind, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+        map.put(Moves.clamp, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+        map.put(Moves.fireSpin, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+        map.put(Moves.magmaStorm, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+        map.put(Moves.sandTomb, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+        map.put(Moves.whirlpool, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+        map.put(Moves.wrap, Arrays.asList(Gen4Constants.gripClaw, bindingBand));
+
+        map.put(Moves.hornLeech, Arrays.asList(Gen4Constants.bigRoot));
+        return Collections.unmodifiableMap(map);
+    }
+
+    // None of these have new entries in Gen V.
+    public static final Map<Integer, List<Integer>> abilityBoostingItems = Gen4Constants.abilityBoostingItems;
+    public static final Map<Integer, List<Integer>> speciesBoostingItems = Gen4Constants.speciesBoostingItems;
+    public static final Map<Type, List<Integer>> typeBoostingItems = Gen4Constants.typeBoostingItems;
+    public static final Map<Type, Integer> weaknessReducingBerries = Gen4Constants.weaknessReducingBerries;
 
     private static Type[] constructTypeTable() {
         Type[] table = new Type[256];
@@ -524,20 +640,20 @@ public class Gen5Constants {
         deoxysMap.put(1,"-A");
         deoxysMap.put(2,"-D");
         deoxysMap.put(3,"-S");
-        map.put(386,deoxysMap);
+        map.put(Species.deoxys, deoxysMap);
 
         Map<Integer,String> wormadamMap = new HashMap<>();
         wormadamMap.put(1,"-S");
         wormadamMap.put(2,"-T");
-        map.put(413,wormadamMap);
+        map.put(Species.wormadam, wormadamMap);
 
         Map<Integer,String> shayminMap = new HashMap<>();
         shayminMap.put(1,"-S");
-        map.put(492,shayminMap);
+        map.put(Species.shaymin, shayminMap);
 
         Map<Integer,String> giratinaMap = new HashMap<>();
         giratinaMap.put(1,"-O");
-        map.put(487,giratinaMap);
+        map.put(Species.giratina, giratinaMap);
 
         Map<Integer,String> rotomMap = new HashMap<>();
         rotomMap.put(1,"-H");
@@ -545,46 +661,46 @@ public class Gen5Constants {
         rotomMap.put(3,"-Fr");
         rotomMap.put(4,"-Fa");
         rotomMap.put(5,"-M");
-        map.put(479,rotomMap);
+        map.put(Species.rotom, rotomMap);
 
         Map<Integer,String> castformMap = new HashMap<>();
         castformMap.put(1,"-F");
         castformMap.put(2,"-W");
         castformMap.put(3,"-I");
-        map.put(351,castformMap);
+        map.put(Species.castform, castformMap);
 
         Map<Integer,String> basculinMap = new HashMap<>();
         basculinMap.put(1,"-B");
-        map.put(550,basculinMap);
+        map.put(Species.basculin, basculinMap);
 
         Map<Integer,String> darmanitanMap = new HashMap<>();
         darmanitanMap.put(1,"-Z");
-        map.put(555,darmanitanMap);
+        map.put(Species.darmanitan, darmanitanMap);
 
         Map<Integer,String> meloettaMap = new HashMap<>();
         meloettaMap.put(1,"-P");
-        map.put(648,meloettaMap);
+        map.put(Species.meloetta, meloettaMap);
 
         Map<Integer,String> kyuremMap = new HashMap<>();
         kyuremMap.put(1,"-W");
         kyuremMap.put(2,"-B");
-        map.put(646,kyuremMap);
+        map.put(Species.kyurem, kyuremMap);
 
-        Map<Integer,String> keldeoMap = new HashMap<>();
+        Map<Integer,String> keldeoMap = new HashMap();
         keldeoMap.put(1,"-R");
-        map.put(647,keldeoMap);
+        map.put(Species.keldeo, keldeoMap);
 
         Map<Integer,String> tornadusMap = new HashMap<>();
         tornadusMap.put(1,"-T");
-        map.put(641,tornadusMap);
+        map.put(Species.tornadus, tornadusMap);
 
         Map<Integer,String> thundurusMap = new HashMap<>();
         thundurusMap.put(1,"-T");
-        map.put(642,thundurusMap);
+        map.put(Species.thundurus, thundurusMap);
 
         Map<Integer,String> landorusMap = new HashMap<>();
         landorusMap.put(1,"-T");
-        map.put(645,landorusMap);
+        map.put(Species.landorus, landorusMap);
 
         return map;
     }
@@ -603,20 +719,20 @@ public class Gen5Constants {
         deoxysMap.put(1,650);
         deoxysMap.put(2,651);
         deoxysMap.put(3,652);
-        map.put(386,deoxysMap);
+        map.put(Species.deoxys, deoxysMap);
 
         Map<Integer,Integer> wormadamMap = new HashMap<>();
         wormadamMap.put(1,653);
         wormadamMap.put(2,654);
-        map.put(413,wormadamMap);
+        map.put(Species.wormadam, wormadamMap);
 
         Map<Integer,Integer> shayminMap = new HashMap<>();
         shayminMap.put(1,655);
-        map.put(492,shayminMap);
+        map.put(Species.shaymin, shayminMap);
 
         Map<Integer,Integer> giratinaMap = new HashMap<>();
         giratinaMap.put(1,656);
-        map.put(487,giratinaMap);
+        map.put(Species.giratina, giratinaMap);
 
         Map<Integer,Integer> rotomMap = new HashMap<>();
         rotomMap.put(1,657);
@@ -624,46 +740,46 @@ public class Gen5Constants {
         rotomMap.put(3,659);
         rotomMap.put(4,660);
         rotomMap.put(5,661);
-        map.put(479,rotomMap);
+        map.put(Species.rotom, rotomMap);
 
         Map<Integer,Integer> castformMap = new HashMap<>();
         castformMap.put(1,662);
         castformMap.put(2,663);
         castformMap.put(3,664);
-        map.put(351,castformMap);
+        map.put(Species.castform, castformMap);
 
         Map<Integer,Integer> basculinMap = new HashMap<>();
         basculinMap.put(1,665);
-        map.put(550,basculinMap);
+        map.put(Species.basculin, basculinMap);
 
         Map<Integer,Integer> darmanitanMap = new HashMap<>();
         darmanitanMap.put(1,666);
-        map.put(555,darmanitanMap);
+        map.put(Species.darmanitan, darmanitanMap);
 
         Map<Integer,Integer> meloettaMap = new HashMap<>();
         meloettaMap.put(1,667);
-        map.put(648,meloettaMap);
+        map.put(Species.meloetta, meloettaMap);
 
         Map<Integer,Integer> kyuremMap = new HashMap<>();
         kyuremMap.put(1,668);
         kyuremMap.put(2,669);
-        map.put(646,kyuremMap);
+        map.put(Species.kyurem, kyuremMap);
 
         Map<Integer,Integer> keldeoMap = new HashMap<>();
         keldeoMap.put(1,670);
-        map.put(647,keldeoMap);
+        map.put(Species.keldeo, keldeoMap);
 
         Map<Integer,Integer> tornadusMap = new HashMap<>();
         tornadusMap.put(1,671);
-        map.put(641,tornadusMap);
+        map.put(Species.tornadus, tornadusMap);
 
         Map<Integer,Integer> thundurusMap = new HashMap<>();
         thundurusMap.put(1,672);
-        map.put(642,thundurusMap);
+        map.put(Species.thundurus, thundurusMap);
 
         Map<Integer,Integer> landorusMap = new HashMap<>();
         landorusMap.put(1,673);
-        map.put(645,landorusMap);
+        map.put(Species.landorus, landorusMap);
 
         return map;
     }
@@ -672,6 +788,14 @@ public class Gen5Constants {
         Map<Integer,Integer> m = new HashMap<>();
         m.put(255,0);
         return m;
+    }
+
+    public static int getFieldOverlayNumber(int romType) {
+        if (romType == Gen5Constants.Type_BW) {
+            return Gen5Constants.bw1FieldOverlayNumber;
+        } else {
+            return Gen5Constants.bw2FieldOverlayNumber;
+        }
     }
 
     public static ItemList allowedItems, nonBadItems;
@@ -1735,36 +1859,53 @@ public class Gen5Constants {
         }
     }
 
-    public static void setCouldBeMultiBattleBW(List<Trainer> trs) {
+    public static void setMultiBattleStatusBW(List<Trainer> trs) {
         // 62 + 63: Multi Battle with Team Plasma Grunts in Wellspring Cave w/ Cheren
         // 401 + 402: Double Battle with Preschooler Sarah and Preschooler Billy
-        setCouldBeMultiBattle(trs, 62, 63, 401, 402);
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 62, 63, 401, 402);
     }
 
-    public static void setCouldBeMultiBattleBW2(List<Trainer> trs) {
+    public static void setMultiBattleStatusBW2(List<Trainer> trs, boolean isBlack2) {
         // 342 + 356: Multi Battle with Team Plasma Grunts in Castelia Sewers w/ Hugh
-        // 347 + 797: Multi Battle with Team Plasma Zinzolin and Team Plasma Grunt w/ Hugh
+        // 347 + 797: Multi Battle with Team Plasma Zinzolin and Team Plasma Grunt on Plasma Frigate w/ Hugh
         // 374 + 375: Multi Battle with Team Plasma Grunts on Plasma Frigate w/ Cheren
         // 376 + 377: Multi Battle with Team Plasma Grunts on Plasma Frigate w/ Hugh
         // 494 + 495 + 496: Cilan, Chili, and Cress all participate in a Multi Battle
-        // 513/788 + 522: Potential Double Battle with Backpacker Kiyo (513 in B2, 788 in W2) and Hiker Markus
-        // 514/789 + 521: Potential Double Battle with Backpacker Kumiko (514 in W2, 789 in B2) and Hiker Jared
-        // 519/786 + 520/787: Potential Double Battle with Ace Trainer Ray (519 in W2, 786 in B2) and Ace Trainer Cora (520 in B2, 787 in W2)
-        // 602 + 603: Potential Double Battle with Ace Trainer Webster and Ace Trainer Shanta
         // 614 + 615: Double Battle with Veteran Claude and Veteran Cecile
         // 643 + 644: Double Battle with Veteran Sinan and Veteran Rosaline
-        // 790 + 791: Potential Double Battle with Nursery Aide Rosalyn and Preschooler Ike
-        // 792 + 793: Potential Double Battle with Youngster Henley and Lass Helia
+        // 704 + 705: Multi Battle with Team Plasma Zinzolin and Team Plasma Grunt in Lacunosa Town w/ Hugh
         // 798 + 799: Multi Battle with Team Plasma Grunts on Plasma Frigate w/ Hugh
         // 807 + 809: Double Battle with Team Plasma Grunts on Plasma Frigate
-        setCouldBeMultiBattle(trs, 342, 347, 356, 374, 375, 376, 377, 494, 495, 496, 513, 514, 519, 520, 521,
-                522, 602, 603, 614, 615, 643, 644, 786, 787, 788, 789, 790, 791, 792, 793, 797, 798, 799, 807, 809);
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 342, 347, 356, 374, 375, 376, 377, 494,
+                495, 496, 614, 615, 643, 644, 704, 705, 797, 798, 799, 807, 809
+        );
+
+        // 513/788 + 522: Potential Double Battle with Backpacker Kiyo (513 in B2, 788 in W2) and Hiker Markus
+        // 519/786 + 520/787: Potential Double Battle with Ace Trainer Ray (519 in W2, 786 in B2) and Ace Trainer Cora (520 in B2, 787 in W2)
+        // 602 + 603: Potential Double Battle with Ace Trainer Webster and Ace Trainer Shanta
+        // 790 + 791: Potential Double Battle with Nursery Aide Rosalyn and Preschooler Ike
+        // 792 + 793: Potential Double Battle with Youngster Henley and Lass Helia
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.POTENTIAL, 513, 522, 602, 603, 788, 790, 791, 792, 793);
+
+        if (isBlack2) {
+            // 789 + 521: Double Battle with Backpacker Kumiko and Hiker Jared
+            setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 521, 789);
+
+            // 786 + 520: Potential Double Batlte with Ace Trainer Ray and Ace Trainer Cora
+            setMultiBattleStatus(trs, Trainer.MultiBattleStatus.POTENTIAL, 520, 786);
+        } else {
+            // 514 + 521: Potential Double Battle with Backpacker Kumiko and Hiker Jared
+            setMultiBattleStatus(trs, Trainer.MultiBattleStatus.POTENTIAL, 514, 521);
+
+            // 519 + 787: Double Battle with Ace Trainer Ray and Ace Trainer Cora
+            setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 519, 787);
+        }
     }
 
-    private static void setCouldBeMultiBattle(List<Trainer> allTrainers, int... numbers) {
+    private static void setMultiBattleStatus(List<Trainer> allTrainers, Trainer.MultiBattleStatus status, int... numbers) {
         for (int num : numbers) {
             if (allTrainers.size() > (num - 1)) {
-                allTrainers.get(num - 1).couldBeMultiBattle = true;
+                allTrainers.get(num - 1).multiBattleStatus = status;
             }
         }
     }

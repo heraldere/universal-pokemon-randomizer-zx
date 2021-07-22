@@ -149,14 +149,6 @@ public class SettingsUpdater {
             insertIntField(23, hasBWPatch);
         }
 
-        // 160 bug:
-        // check if all of the WPAdditionalRule bitfields are unset
-        // (None, Type Themed, Catch Em All)
-        // if they are all unset, switch "similar strength" on
-        if ((dataBlock[12] & (0x01 | 0x04 | 0x08)) == 0) {
-            dataBlock[13] |= 0x04;
-        }
-
         // 160 to 161: no change
         // the only changes were in implementation, which broke presets, but
         // leaves settings files the same
@@ -189,7 +181,7 @@ public class SettingsUpdater {
                 oldTweaks |= MiscTweak.UPDATE_TYPE_EFFECTIVENESS.getValue();
             }
             if ((dataBlock[2] & (1 << 5)) != 0) {
-                oldTweaks |= MiscTweak.RANDOMIZE_HIDDEN_HOLLOWS.getValue();
+                oldTweaks |= MiscTweak.UNUSED1.getValue();
             }
             FileFunctions.writeFullInt(dataBlock, 27, oldTweaks);
 
@@ -269,6 +261,27 @@ public class SettingsUpdater {
 
             // move generation
             insertExtraByte(45, (byte) 0);
+        }
+
+        if (oldVersion < 314) {
+
+            // exp curve
+            insertExtraByte(46, (byte) 0);
+
+            // static level modifier
+            insertExtraByte(47, (byte) 50);
+        }
+
+        if (oldVersion < 315) {
+
+            int oldTweaks = FileFunctions.readFullInt(dataBlock, 32);
+
+            oldTweaks &= ~MiscTweak.UNUSED1.getValue();
+
+            FileFunctions.writeFullInt(dataBlock, 32, oldTweaks);
+
+            insertExtraByte(48, (byte) 0);
+
         }
 
         // fix checksum

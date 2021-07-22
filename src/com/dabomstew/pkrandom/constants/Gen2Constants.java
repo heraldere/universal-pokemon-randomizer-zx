@@ -60,8 +60,6 @@ public class Gen2Constants {
 
     public static final int oddEggPokemonCount = 14;
 
-    public static final int unownIndex = 201, slowpokeIndex = 79, seadraIndex = 117, poliwhirlIndex = 61;
-
     public static final int tmCount = 50, hmCount = 7;
 
     public static final String mtMenuCancelString = "CANCEL";
@@ -77,14 +75,18 @@ public class Gen2Constants {
     public static final List<Integer> requiredFieldTMs = Arrays.asList(4, 20, 22, 26, 28, 34, 35, 39,
             40, 43, 44, 46);
 
-    public static final List<Integer> fieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 250, 127, 249, 29, 230);
+    public static final List<Integer> fieldMoves = Arrays.asList(
+            Moves.cut, Moves.fly, Moves.surf, Moves.strength, Moves.flash, Moves.dig, Moves.teleport,
+            Moves.whirlpool, Moves.waterfall, Moves.rockSmash, Moves.headbutt, Moves.sweetScent);
 
-    public static final List<Integer> earlyRequiredHMMoves = Collections.singletonList(15);
+    public static final List<Integer> earlyRequiredHMMoves = Collections.singletonList(Moves.cut);
 
-    // ban thief from levelup moves
-    public static final List<Integer> bannedLevelupMoves = Collections.singletonList(168);
+    // ban thief because trainers are broken with it (items are not returned).
+    // ban transform because of Transform assumption glitch
+    public static final List<Integer> bannedLevelupMoves = Arrays.asList(Moves.transform, Moves.thief);
 
-    public static final List<Integer> brokenMoves = Arrays.asList(49, 82, 32, 90, 12);
+    public static final List<Integer> brokenMoves = Arrays.asList(
+            Moves.sonicBoom, Moves.dragonRage, Moves.hornDrill, Moves.fissure, Moves.guillotine);
 
     public static final int tmBlockOneIndex = 191, tmBlockOneSize = 4, tmBlockTwoIndex = 196, tmBlockTwoSize = 24,
             tmBlockThreeIndex = 221, tmBlockThreeSize = 22;

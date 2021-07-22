@@ -28,6 +28,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -36,7 +37,7 @@ import java.util.zip.CRC32;
 public class FileFunctions {
 
     public static File fixFilename(File original, String defaultExtension) {
-        return fixFilename(original, defaultExtension, null);
+        return fixFilename(original, defaultExtension, new ArrayList<>());
     }
 
     // Behavior:
@@ -45,21 +46,17 @@ public class FileFunctions {
     // with defaultExtension
     // else, leave as is
     public static File fixFilename(File original, String defaultExtension, List<String> bannedExtensions) {
-        String filename = original.getName();
-        if (filename.lastIndexOf('.') >= filename.length() - 5 && filename.lastIndexOf('.') != filename.length() - 1
-                && filename.length() > 4 && filename.lastIndexOf('.') != -1) {
-            // valid extension, read it off
-            String ext = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-            if (bannedExtensions != null && bannedExtensions.contains(ext)) {
-                // replace with default
-                filename = filename.substring(0, filename.lastIndexOf('.') + 1) + defaultExtension;
+        String absolutePath = original.getAbsolutePath();
+        for (String bannedExtension: bannedExtensions) {
+            if (absolutePath.endsWith("." + bannedExtension)) {
+                absolutePath = absolutePath.substring(0, absolutePath.lastIndexOf('.') + 1) + defaultExtension;
+                break;
             }
-            // else no change
-        } else {
-            // add extension
-            filename += "." + defaultExtension;
         }
-        return new File(original.getAbsolutePath().replace(original.getName(), "") + filename);
+        if (!absolutePath.endsWith("." + defaultExtension)) {
+            absolutePath += "." + defaultExtension;
+        }
+        return new File(absolutePath);
     }
 
     private static List<String> overrideFiles = Arrays.asList(SysConstants.customNamesFile,

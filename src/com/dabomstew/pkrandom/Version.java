@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Version {
-    public static final int VERSION = 314; // Increment by 1 for new version. Updated for 4.1.0
-    public static final String VERSION_STRING = "4.1.0-dev";
+    public static final int VERSION = 316; // Increment by 1 for new version. Updated for 4.2.1
+    public static final String VERSION_STRING = "4.2.2-dev";
 
     public static final Map<Integer,String> oldVersions = setupVersionsMap();
 
@@ -54,6 +54,8 @@ public class Version {
         map.put(311,"4.0.0");
         map.put(312,"4.0.1");
         map.put(313,"4.0.2");
+        map.put(314,"4.1.0");
+        map.put(315,"4.2.0");
 
         // Latest version - when version is updated, add the old version as an explicit put
         map.put(VERSION, VERSION_STRING);
@@ -66,19 +68,24 @@ public class Version {
             return false;
         }
         // Chop off leading "v" from release version
-        String releaseVersionTrimmed = releaseVersion.substring(1);
-        String[] thisVersionPieces = VERSION_STRING.split("\\.");
-        String[] releaseVersionPieces = releaseVersionTrimmed.split("\\.");
-        int smallestLength = Math.min(thisVersionPieces.length, releaseVersionPieces.length);
-        for (int i = 0; i < smallestLength; i++) {
-            int thisVersionPiece = Integer.parseInt(thisVersionPieces[i]);
-            int releaseVersionPiece = Integer.parseInt(releaseVersionPieces[i]);
-            if (thisVersionPiece < releaseVersionPiece) {
-                return true;
-            } else if (thisVersionPiece > releaseVersionPiece) {
-                return false;
+        try {
+            String releaseVersionTrimmed = releaseVersion.substring(1);
+            String[] thisVersionPieces = VERSION_STRING.split("\\.");
+            String[] releaseVersionPieces = releaseVersionTrimmed.split("\\.");
+            int smallestLength = Math.min(thisVersionPieces.length, releaseVersionPieces.length);
+            for (int i = 0; i < smallestLength; i++) {
+                int thisVersionPiece = Integer.parseInt(thisVersionPieces[i]);
+                int releaseVersionPiece = Integer.parseInt(releaseVersionPieces[i]);
+                if (thisVersionPiece < releaseVersionPiece) {
+                    return true;
+                } else if (thisVersionPiece > releaseVersionPiece) {
+                    return false;
+                }
             }
+            return false;
+        } catch (Exception e) {
+            // Really not a big deal if we fail at this, probably because we can't connect to Github.
+            return false;
         }
-        return false;
     }
 }

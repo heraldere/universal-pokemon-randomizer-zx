@@ -34,14 +34,15 @@ public class TrainerPokemon {
     public int move3;
     public int move4;
 
-    public int AILevel;
     public int heldItem = 0;
-    public int ability;
+    public boolean hasMegaStone;
+    public boolean hasZCrystal;
+    public int abilitySlot;
     public int forme;
     public String formeSuffix = "";
     public int absolutePokeNumber = 0;
 
-    public int mysteryFlag;
+    public int forcedGenderFlag;
     public byte nature;
     public byte hpEVs;
     public byte atkEVs;
@@ -50,11 +51,24 @@ public class TrainerPokemon {
     public byte spdefEVs;
     public byte speedEVs;
     public int IVs;
+    // In gens 3-5, there is a byte or word that corresponds
+    // to the IVs a trainer's pokemon has. In X/Y, this byte
+    // also encodes some other information, possibly related
+    // to EV spread. Because of the unknown part in X/Y,
+    // we store the whole "strength byte" so we can
+    // write it unchanged when randomizing trainer pokemon.
+    public int strength;
     
     public boolean resetMoves = false;
 
     public String toString() {
-        return pokemon.name + formeSuffix + " Lv" + level;
+        String s = pokemon.name + formeSuffix;
+        if (heldItem != 0) {
+            // This can be filled in with the actual name when written to the log.
+            s += "@%s";
+        }
+        s+= " Lv" + level;
+        return s;
     }
 
     public boolean canMegaEvolve() {
@@ -78,9 +92,9 @@ public class TrainerPokemon {
         tpk.move3 = move3;
         tpk.move4 = move4;
 
-        tpk.AILevel = AILevel;
+        tpk.strength = strength;
         tpk.heldItem = heldItem;
-        tpk.ability = ability;
+        tpk.abilitySlot = abilitySlot;
         tpk.forme = forme;
         tpk.formeSuffix = formeSuffix;
         tpk.absolutePokeNumber = absolutePokeNumber;

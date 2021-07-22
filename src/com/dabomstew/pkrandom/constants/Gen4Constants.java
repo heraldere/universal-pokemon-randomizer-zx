@@ -37,14 +37,18 @@ public class Gen4Constants {
     public static final int Type_Plat = 1;
     public static final int Type_HGSS = 2;
 
+    public static final int arm9Offset = 0x02000000;
+
     public static final int pokemonCount = 493, moveCount = 467;
     private static final int dpFormeCount = 5, platHgSsFormeCount = 12;
     public static final int formeOffset = 2;
 
     public static final int bsHPOffset = 0, bsAttackOffset = 1, bsDefenseOffset = 2, bsSpeedOffset = 3,
             bsSpAtkOffset = 4, bsSpDefOffset = 5, bsPrimaryTypeOffset = 6, bsSecondaryTypeOffset = 7,
-            bsCatchRateOffset = 8, bsCommonHeldItemOffset = 12, bsRareHeldItemOffset = 14, bsGrowthCurveOffset = 19,
-            bsAbility1Offset = 22, bsAbility2Offset = 23, bsTMHMCompatOffset = 28;
+            bsCatchRateOffset = 8, bsCommonHeldItemOffset = 12, bsRareHeldItemOffset = 14, bsGenderRatioOffset = 16,
+            bsGrowthCurveOffset = 19, bsAbility1Offset = 22, bsAbility2Offset = 23, bsTMHMCompatOffset = 28;
+
+    public static final String starterCriesPrefix = "0004000C10BD0000000000000000000000E000000000000000E0000000000200";
 
     public static final byte[] hgssStarterCodeSuffix = { 0x03, 0x03, 0x1A, 0x12, 0x1, 0x23, 0x0, 0x0 };
 
@@ -72,9 +76,6 @@ public class Gen4Constants {
 
     public static final int dpStarterStringIndex = 19, ptStarterStringIndex = 36;
 
-    public static final int chikoritaIndex = 152, cyndaquilIndex = 155, totodileIndex = 158, turtwigIndex = 387,
-            chimcharIndex = 390, piplupIndex = 393, slowpokeIndex = 79, eeveeIndex = 133;
-
     public static final int fossilCount = 7;
 
     public static final String dpptTMDataPrefix = "D100D200D300D400", hgssTMDataPrefix = "1E003200";
@@ -83,7 +84,7 @@ public class Gen4Constants {
 
     public static final int tmItemOffset = 328;
 
-    public static final int textCharsPerLine = 40;
+    private static final int dpptTextCharsPerLine = 38, hgssTextCharsPerLine = 36;
 
     public static final String dpItemPalettesPrefix = "8D018E01210132018D018F0122013301",
             pthgssItemPalettesPrefix = "8D018E01210133018D018F0122013401";
@@ -94,19 +95,236 @@ public class Gen4Constants {
 
     public static final int highestAbilityIndex = 123;
 
+    // https://projectpokemon.org/home/docs/gen-4/list-of-items-by-index-number-r23/
+    // Berries that can be eaten in battle listed. They are in numeric order and roughly categorized.
+    public static final int
+            // status effect berries
+            cheriBerry = 0x95, chestoBerry = 0x96, pechaBerry = 0x97, rawstBerry = 0x98, aspearBerry = 0x99,
+            leppaBerry = 0x9a, oranBerry = 0x9b, persimBerry = 0x9c, lumBerry = 0x9d, sitrusBerry = 0x9e,
+            // Restore 1/8 HP when below 50% but may cause confusion. In Gen 7, these heal 1/2 when
+            // below 25% (and still may cause confusion).
+            figyBerry = 0x9f, wikiBerry = 0xa0, magoBerry = 0xa1, aguavBerry = 0xa2, iapapaBerry = 0xa3,
+            // Reduce damage from supereffective damage
+            occaBerry = 0xb8, passhoBerry = 0xb9, wacanBerry = 0xba, rindoBerry = 0xbb, yacheBerry = 0xbc,
+            chopleBerry = 0xbd, kebiaBerry = 0xbe, shucaBerry = 0xbf, cobaBerry = 0xc0, payapaBerry = 0xc1,
+            tangaBerry = 0xc2, chartiBerry = 0xc3, kasibBerry = 0xc4, habanBerry = 0xc5, colburBerry = 0xc6,
+            babiriBerry = 0xc7, chilanBerry = 0xc8,
+            // Increase stat (or other buff) when below 25%
+            liechiBerry = 0xc9, ganlonBerry = 0xca, salacBerry = 0xcb, petayaBerry = 0xcc, apicotBerry = 0xcd,
+            lansatBerry = 0xce, starfBerry = 0xcf, enigmaBerry = 0xd0, micleBerry = 0xd1, custapBerry = 0xd2,
+            // retaliate berries
+            jabocaBerry = 0xd3, rowapBerry = 0xd4;
+    // Other consumable held items
+    public static final int berryJuice = 0x2b, whiteHerb = 0xd6, mentalHerb = 0xdb, powerHerb = 0x10f,
+            focusSash = 0x113;
+    // non-consumable held items with in-battle NPC effect (not specific to one pokemon family)
+    public static final int brightPowder = 0x0d5, quickClaw = 0x0d9, choiceBand = 0x0dc, kingsRock = 0x0dd,
+            silverPowder = 0x0de, focusBand = 0x0e6, scopeLens = 0x0e8, metalCoat = 0x0e9, leftovers = 0x0ea,
+            softSand = 0x0ed, hardStone = 0x0ee, miracleSeed = 0x0ef, blackGlasses = 0x0f0, blackBelt = 0x0f1,
+            magnet = 0x0f2, mysticWater = 0x0f3, sharpBeak = 0x0f4, poisonBarb = 0x0f5, neverMeltIce = 0x0f6,
+            spellTag = 0x0f7, twistedSpoon = 0x0f8, charcoal = 0x0f9, dragonFang = 0x0fa, silkScarf = 0x0fb,
+            shellBell = 0x0fd, seaIncense = 0x0fe, laxIncense = 0x0ff, wideLens = 0x109, muscleBand = 0x10a,
+            wiseGlasses = 0x10b, expertBelt = 0x10c, lightClay = 0x10d, lifeOrb = 0x10e, toxicOrb = 0x110,
+            flameOrb = 0x111, zoomLens = 0x114, metronome = 0x115, ironBall = 0x116, laggingTail = 0x117,
+            destinyKnot = 0x118, blackSludge = 0x119, icyRock = 0x11a, smoothRock = 0x11b,
+            heatRock = 0x11c, dampRock = 0x11d, gripClaw = 0x11e, choiceScarf = 0x11f, stickyBarb = 0x120,
+            shedShell = 0x127, bigRoot = 0x128, choiceSpecs = 0x129, flamePlate = 0x12a, splashPlate = 0x12b,
+            zapPlate = 0x12c, meadowPlate = 0x12d, iciclePlate = 0x12e, fistPlate = 0x12f, toxicPlate = 0x130,
+            earthPlate = 0x131, skyPlate = 0x132, mindPlate = 0x133, insectPlate = 0x134, stonePlate = 0x135,
+            spookyPlate = 0x136, dracoPlate = 0x137, dreadPlate = 0x138, ironPlate = 0x139, oddIncense = 0x13a,
+            rockIncense = 0x13b, fullIncense = 0x13c, waveIncense = 0x13d, roseIncense = 0x13e,
+            razorClaw = 0x146, razorFang = 0x147;
+    // species-specific held items.
+    public static final int adamantOrb = 0x087, lustrousOrb = 0x088, soulDew = 0x0e1, deepSeaTooth = 0x0e2,
+            deepSeaScale = 0x0e3, lightBall = 0x0ec, luckyPunch = 0x100, metalPowder = 0x101, thickClub = 0x102,
+            stick = 0x103, quickPowder = 0x112;
+
+    public static final List<Integer> consumableHeldItems = Arrays.asList(
+            cheriBerry, chestoBerry, pechaBerry, rawstBerry, aspearBerry, leppaBerry, oranBerry, persimBerry,
+            lumBerry, sitrusBerry, figyBerry, wikiBerry, magoBerry, aguavBerry, iapapaBerry, occaBerry, passhoBerry,
+            wacanBerry, rindoBerry, yacheBerry, chopleBerry, kebiaBerry, shucaBerry, cobaBerry, payapaBerry,
+            tangaBerry, chartiBerry, kasibBerry, habanBerry, colburBerry, babiriBerry, chilanBerry, liechiBerry,
+            ganlonBerry, salacBerry, petayaBerry, apicotBerry, lansatBerry, starfBerry, enigmaBerry, micleBerry,
+             custapBerry, jabocaBerry, rowapBerry, berryJuice, whiteHerb, mentalHerb, powerHerb, focusSash);
+
+    public static final List<Integer> allHeldItems = setupAllHeldItems();
+
+    private static List<Integer> setupAllHeldItems() {
+        List<Integer> list = new ArrayList<>();
+        list.addAll(Arrays.asList(brightPowder, quickClaw, choiceBand, kingsRock, silverPowder, focusBand,
+                scopeLens, metalCoat, leftovers, softSand, hardStone, miracleSeed, blackGlasses, blackBelt, magnet,
+                mysticWater, sharpBeak, poisonBarb, neverMeltIce, spellTag, twistedSpoon, charcoal, dragonFang,
+                silkScarf, shellBell, seaIncense, laxIncense, wideLens, muscleBand, wiseGlasses, expertBelt, lightClay,
+                lifeOrb, toxicOrb, flameOrb, zoomLens, metronome, ironBall, laggingTail, destinyKnot,
+                blackSludge, icyRock, smoothRock, heatRock, dampRock, gripClaw, choiceScarf, stickyBarb, shedShell,
+                bigRoot, choiceSpecs, flamePlate, splashPlate, zapPlate, meadowPlate, iciclePlate, fistPlate,
+                toxicPlate, earthPlate, skyPlate, mindPlate, insectPlate, stonePlate, spookyPlate, dracoPlate,
+                dreadPlate, ironPlate, oddIncense, rockIncense, fullIncense, waveIncense, roseIncense,
+                razorClaw, razorFang));
+        list.addAll(consumableHeldItems);
+        return list;
+    }
+
+    public static final List<Integer> generalPurposeConsumableItems = Collections.unmodifiableList(Arrays.asList(
+            cheriBerry, chestoBerry, pechaBerry, rawstBerry, aspearBerry, leppaBerry,
+            oranBerry, persimBerry, lumBerry, sitrusBerry, ganlonBerry, salacBerry,
+            // An NPC pokemon's nature is generated randomly with IVs during gameplay. Therefore, we do not include
+            // the flavor berries because, prior to Gen 7, they aren't worth the risk.
+            apicotBerry, lansatBerry, starfBerry, enigmaBerry, micleBerry, custapBerry,
+            jabocaBerry, rowapBerry, berryJuice, whiteHerb, mentalHerb, focusSash));
+
+    public static final List<Integer> generalPurposeItems = Collections.unmodifiableList(Arrays.asList(
+            brightPowder, quickClaw, kingsRock, focusBand, scopeLens, leftovers, shellBell, laxIncense,
+            wideLens, expertBelt, lifeOrb, zoomLens, destinyKnot, shedShell, razorClaw, razorFang));
+
+    public static final Map<Type, List<Integer>> typeBoostingItems = initializeTypeBoostingItems();
+
+    private static Map<Type, List<Integer>> initializeTypeBoostingItems() {
+        Map<Type, List<Integer>> map = new HashMap<>();
+        map.put(Type.BUG, Arrays.asList(silverPowder, insectPlate));
+        map.put(Type.DARK, Arrays.asList(blackGlasses, dreadPlate));
+        map.put(Type.DRAGON, Arrays.asList(dragonFang, dracoPlate));
+        map.put(Type.ELECTRIC, Arrays.asList(magnet, zapPlate));
+        map.put(Type.FIGHTING, Arrays.asList(blackBelt, fistPlate));
+        map.put(Type.FIRE, Arrays.asList(charcoal, flamePlate));
+        map.put(Type.FLYING, Arrays.asList(sharpBeak, skyPlate));
+        map.put(Type.GHOST, Arrays.asList(spellTag, spookyPlate));
+        map.put(Type.GRASS, Arrays.asList(miracleSeed, meadowPlate, roseIncense));
+        map.put(Type.GROUND, Arrays.asList(softSand, earthPlate));
+        map.put(Type.ICE, Arrays.asList(neverMeltIce, iciclePlate));
+        map.put(Type.NORMAL, Arrays.asList(silkScarf));
+        map.put(Type.POISON, Arrays.asList(poisonBarb, toxicPlate));
+        map.put(Type.PSYCHIC, Arrays.asList(twistedSpoon, mindPlate, oddIncense));
+        map.put(Type.ROCK, Arrays.asList(hardStone, stonePlate, rockIncense));
+        map.put(Type.STEEL, Arrays.asList(metalCoat, ironPlate));
+        map.put(Type.WATER, Arrays.asList(mysticWater, seaIncense, splashPlate, waveIncense));
+        map.put(null, Collections.emptyList()); // ??? type
+        return Collections.unmodifiableMap(map);
+    }
+
+    public static final Map<Integer, List<Integer>> moveBoostingItems = initializeMoveBoostingItems();
+
+    private static Map<Integer, List<Integer>> initializeMoveBoostingItems() {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        map.put(Moves.bounce, Arrays.asList(powerHerb));
+        map.put(Moves.dig, Arrays.asList(powerHerb));
+        map.put(Moves.dive, Arrays.asList(powerHerb));
+        map.put(Moves.fly, Arrays.asList(powerHerb));
+        map.put(Moves.razorWind, Arrays.asList(powerHerb));
+        map.put(Moves.skullBash, Arrays.asList(powerHerb));
+        map.put(Moves.skyAttack, Arrays.asList(powerHerb));
+        map.put(Moves.solarBeam, Arrays.asList(powerHerb));
+
+        map.put(Moves.fling, Arrays.asList(toxicOrb, flameOrb, ironBall));
+
+        map.put(Moves.trick, Arrays.asList(toxicOrb, flameOrb, fullIncense, laggingTail));
+        map.put(Moves.switcheroo, Arrays.asList(toxicOrb, flameOrb, fullIncense, laggingTail));
+
+        map.put(Moves.trickRoom, Arrays.asList(ironBall));
+
+        map.put(Moves.facade, Arrays.asList(toxicOrb, flameOrb));
+
+        map.put(Moves.psychoShift, Arrays.asList(toxicOrb, flameOrb));
+
+        map.put(Moves.lightScreen, Arrays.asList(lightClay));
+        map.put(Moves.reflect, Arrays.asList(lightClay));
+
+        map.put(Moves.hail, Arrays.asList(icyRock));
+
+        map.put(Moves.sandstorm, Arrays.asList(smoothRock));
+
+        map.put(Moves.sunnyDay, Arrays.asList(heatRock));
+
+        map.put(Moves.rainDance, Arrays.asList(dampRock));
+
+        map.put(Moves.bind, Arrays.asList(gripClaw));
+        map.put(Moves.clamp, Arrays.asList(gripClaw));
+        map.put(Moves.fireSpin, Arrays.asList(gripClaw));
+        map.put(Moves.magmaStorm, Arrays.asList(gripClaw));
+        map.put(Moves.outrage, Arrays.asList(gripClaw));
+        map.put(Moves.sandTomb, Arrays.asList(gripClaw));
+        map.put(Moves.uproar, Arrays.asList(gripClaw));
+        map.put(Moves.whirlpool, Arrays.asList(gripClaw));
+        map.put(Moves.wrap, Arrays.asList(gripClaw));
+
+        map.put(Moves.absorb, Arrays.asList(bigRoot));
+        map.put(Moves.aquaRing, Arrays.asList(bigRoot));
+        map.put(Moves.drainPunch, Arrays.asList(bigRoot));
+        map.put(Moves.dreamEater, Arrays.asList(bigRoot));
+        map.put(Moves.gigaDrain, Arrays.asList(bigRoot));
+        map.put(Moves.ingrain, Arrays.asList(bigRoot));
+        map.put(Moves.leechLife, Arrays.asList(bigRoot));
+        map.put(Moves.leechSeed, Arrays.asList(bigRoot));
+        map.put(Moves.megaDrain, Arrays.asList(bigRoot));
+
+        return Collections.unmodifiableMap(map);
+    }
+
+    public static final Map<Type, Integer> weaknessReducingBerries = initializeWeaknessReducingBerries();
+
+    private static Map<Type, Integer> initializeWeaknessReducingBerries() {
+        Map<Type, Integer> map = new HashMap<>();
+        map.put(Type.FIRE, occaBerry);
+        map.put(Type.WATER, passhoBerry);
+        map.put(Type.ELECTRIC, wacanBerry);
+        map.put(Type.GRASS, rindoBerry);
+        map.put(Type.ICE, yacheBerry);
+        map.put(Type.FIGHTING, chopleBerry);
+        map.put(Type.POISON, kebiaBerry);
+        map.put(Type.GROUND, shucaBerry);
+        map.put(Type.FLYING, cobaBerry);
+        map.put(Type.PSYCHIC, payapaBerry);
+        map.put(Type.BUG, tangaBerry);
+        map.put(Type.ROCK, chartiBerry);
+        map.put(Type.GHOST, kasibBerry);
+        map.put(Type.DRAGON, habanBerry);
+        map.put(Type.DARK, colburBerry);
+        map.put(Type.STEEL, babiriBerry);
+        return Collections.unmodifiableMap(map);
+    }
+
+    public static final Map<Integer, List<Integer>> speciesBoostingItems = initializeSpeciesBoostingItems();
+
+    private static Map<Integer, List<Integer>> initializeSpeciesBoostingItems() {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        map.put(Species.dialga, Arrays.asList(adamantOrb));
+        map.put(Species.palkia, Arrays.asList(lustrousOrb));
+        map.put(Species.latias, Arrays.asList(soulDew));
+        map.put(Species.latios, Arrays.asList(soulDew));
+        map.put(Species.clamperl, Arrays.asList(deepSeaTooth, deepSeaScale));
+        map.put(Species.pikachu, Arrays.asList(lightBall));
+        map.put(Species.chansey, Arrays.asList(luckyPunch));
+        map.put(Species.ditto, Arrays.asList(metalPowder, quickPowder));
+        map.put(Species.cubone, Arrays.asList(thickClub));
+        map.put(Species.marowak, Arrays.asList(thickClub));
+        map.put(Species.farfetchd, Arrays.asList(stick));
+        return Collections.unmodifiableMap(map);
+    }
+
+    public static final Map<Integer, List<Integer>> abilityBoostingItems = initializeAbilityBoostingItems();
+
+    private static Map<Integer, List<Integer>> initializeAbilityBoostingItems() {
+        Map<Integer, List<Integer>> map = new HashMap<>();
+        map.put(Abilities.guts, Arrays.asList(flameOrb, toxicOrb));
+        map.put(Abilities.magicGuard, Arrays.asList(stickyBarb, lifeOrb));
+        return Collections.unmodifiableMap(map);
+    }
+
     public static final Map<Integer,List<Integer>> abilityVariations = setupAbilityVariations();
 
     private static Map<Integer,List<Integer>> setupAbilityVariations() {
         Map<Integer,List<Integer>> map = new HashMap<>();
-        map.put(15,Arrays.asList(15,72)); // Insomnia/Vital Spirit
-        map.put(29,Arrays.asList(29,73)); // Clear Body/White Smoke
-        map.put(37,Arrays.asList(37,74)); // Huge Power/Pure Power
-        map.put(4,Arrays.asList(4,75)); // Battle Armor/Shell Armor
-        map.put(13,Arrays.asList(13,76)); // Cloud Nine/Air Lock
-        map.put(111,Arrays.asList(111,116)); // Filter/Solid Rock
+        map.put(Abilities.insomnia, Arrays.asList(Abilities.insomnia, Abilities.vitalSpirit));
+        map.put(Abilities.clearBody, Arrays.asList(Abilities.clearBody, Abilities.whiteSmoke));
+        map.put(Abilities.hugePower, Arrays.asList(Abilities.hugePower, Abilities.purePower));
+        map.put(Abilities.battleArmor, Arrays.asList(Abilities.battleArmor, Abilities.shellArmor));
+        map.put(Abilities.cloudNine, Arrays.asList(Abilities.cloudNine, Abilities.airLock));
+        map.put(Abilities.filter, Arrays.asList(Abilities.filter, Abilities.solidRock));
 
         return map;
     }
+
+    public static final List<Integer> uselessAbilities = Arrays.asList(Abilities.forecast, Abilities.multitype);
 
     public static final int dpptSetVarScript = 0x28, hgssSetVarScript = 0x29;
 
@@ -115,21 +333,6 @@ public class Gen4Constants {
     public static final int itemScriptVariable = 0x8008;
     
     public static final int luckyEggIndex = 0xE7;
-
-    private static final String dpShopDataPrefix = "4D10040295100402C910040201110402391104027511040285AF0302A5AF0302";
-    private static final String ptShopDataPrefix = "017F0402397F0402817F0402B57F0402ED7F0402258004026180040281800402";
-    private static final String hgssShopDataPrefix = "2D8D0402758D0402BD8D0402F18D0402298E0402618E0402998E0402B98E0402";
-
-    public static String getShopDataPrefix(int romType) {
-        if (romType == Type_DP) {
-            return dpShopDataPrefix;
-        } else if (romType == Type_Plat) {
-            return ptShopDataPrefix;
-        } else if (romType == Type_HGSS) {
-            return hgssShopDataPrefix;
-        }
-        return "";
-    }
 
     private static List<String> dpShopNames = Arrays.asList(
             "Sunyshore Secondary",
@@ -269,6 +472,197 @@ public class Gen4Constants {
         return absolutePokeNumsByBaseForme.getOrDefault(baseForme,dummyAbsolutePokeNums).getOrDefault(formNum,baseForme);
     }
 
+    public static final String lyraEthanMarillSpritePrefix = "274E0604C301274E0704E101274E0804";
+
+    public static final List<Integer> hgssBannedOverworldPokemon = Arrays.asList(
+            // Unown alts (to avoid 28x chance of getting Unown)
+            // Too large Pokemon (box legendaries, Steelix, Wailord, Regigigas and Arceus)
+            502,
+            503,
+            504,
+            505,
+            506,
+            507,
+            508,
+            509,
+            510,
+            511,
+            512,
+            513,
+            514,
+            515,
+            516,
+            517,
+            518,
+            519,
+            520,
+            521,
+            522,
+            523,
+            524,
+            525,
+            526,
+            527,
+            528,
+            536,
+            537,
+            579,
+            580,
+            651,
+            712,
+            713,
+            714,
+            833,
+            834,
+            836,
+            837,
+            838,
+            845,
+            846,
+            847,
+            848,
+            849,
+            850,
+            851,
+            852,
+            853,
+            854,
+            855,
+            856,
+            857,
+            858,
+            859,
+            860,
+            861,
+            862
+    );
+
+    public static final int convertOverworldSpriteToSpecies(int overworldSpriteID) {
+        int speciesID = overworldSpriteID - 296;
+
+        // Venusaur
+        if (overworldSpriteID >= 300) {
+            speciesID -= 1;
+        }
+
+        // Pikachu
+        if (overworldSpriteID >= 323) {
+            speciesID -= 1;
+        }
+
+        // Meganium
+        if (overworldSpriteID >= 453) {
+            speciesID -= 1;
+        }
+
+        // Pichu
+        if (overworldSpriteID >= 472) {
+            speciesID -= 1;
+        }
+
+        // Unown
+        if (overworldSpriteID >= 528) {
+            speciesID -= 27;
+        } else if (overworldSpriteID > 501) {
+            speciesID -= (overworldSpriteID - 501);
+        }
+
+        // Wobbuffet
+        if (overworldSpriteID >= 530) {
+            speciesID -= 1;
+        }
+
+        // Steelix
+        if (overworldSpriteID >= 537) {
+            speciesID -= 1;
+        }
+
+        // Heracross
+        if (overworldSpriteID >= 544) {
+            speciesID -= 1;
+        }
+
+        // Deoxys
+        if (overworldSpriteID >= 719) {
+            speciesID -= 3;
+        } else if (overworldSpriteID > 716) {
+            speciesID -= (overworldSpriteID - 716);
+        }
+
+        // Burmy
+        if (overworldSpriteID >= 747) {
+            speciesID -= 2;
+        } else if (overworldSpriteID > 745) {
+            speciesID -= (overworldSpriteID - 745);
+        }
+
+        // Wormadam
+        if (overworldSpriteID >= 750) {
+            speciesID -= 2;
+        } else if (overworldSpriteID > 748) {
+            speciesID -= (overworldSpriteID - 748);
+        }
+
+        // Combee
+        if (overworldSpriteID >= 753) {
+            speciesID -= 1;
+        }
+
+        // Shellos
+        if (overworldSpriteID >= 761) {
+            speciesID -= 1;
+        }
+
+        // Gastrodon
+        if (overworldSpriteID >= 763) {
+            speciesID -= 1;
+        }
+
+        // Gible
+        if (overworldSpriteID >= 784) {
+            speciesID -= 1;
+        }
+
+        // Gabite
+        if (overworldSpriteID >= 786) {
+            speciesID -= 1;
+        }
+
+        // Garchomp
+        if (overworldSpriteID >= 788) {
+            speciesID -= 1;
+        }
+
+        // Hippopotas
+        if (overworldSpriteID >= 793) {
+            speciesID -= 1;
+        }
+
+        // Hippowdon
+        if (overworldSpriteID >= 795) {
+            speciesID -= 1;
+        }
+
+        // Rotom
+        if (overworldSpriteID >= 829) {
+            speciesID -= 5;
+        } else if (overworldSpriteID > 824) {
+            speciesID -= (overworldSpriteID - 824);
+        }
+
+        // Giratina
+        if (overworldSpriteID >= 838) {
+            speciesID -= 1;
+        }
+
+        // Arceus
+        if (overworldSpriteID > 845) {
+            speciesID -= (overworldSpriteID - 845);
+        }
+
+        return speciesID;
+    }
+
     // The original slot each of the 20 "alternate" slots is mapped to
     // swarmx2, dayx2, nightx2, pokeradarx4, GBAx10
     // NOTE: in the game data there are 6 fillers between pokeradar and GBA
@@ -306,27 +700,25 @@ public class Gen4Constants {
     public static final List<Integer> ptRequiredFieldTMs = Arrays.asList(2, 3, 5, 7, 9, 11, 12, 18, 19,
             23, 28, 34, 37, 39, 41, 43, 46, 47, 49, 50, 62, 69, 79, 80, 82, 84, 85, 87);
 
-    // DPPt:
-    // cut, fly, surf, strength, flash, dig, teleport, waterfall,
-    // rock smash, sweet scent, defog, rock climb
-    public static final List<Integer> dpptFieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 127, 249, 230, 432,
-            431);
+    public static final List<Integer> dpptFieldMoves = Arrays.asList(
+            Moves.cut, Moves.fly, Moves.surf, Moves.strength, Moves.flash, Moves.dig, Moves.teleport,
+            Moves.waterfall, Moves.rockSmash, Moves.sweetScent, Moves.defog, Moves.rockClimb);
 
-    public static final List<Integer> hgssFieldMoves = Arrays.asList(15, 19, 57, 70, 148, 91, 100, 250, 127, 249, 29,
-            230, 431);
-    // DPPt: rock smash, cut
-    public static final List<Integer> dpptEarlyRequiredHMMoves = Arrays.asList(249, 15);
-    // HGSS: just cut
-    public static final List<Integer> hgssEarlyRequiredHMMoves = Collections.singletonList(15);
+    public static final List<Integer> hgssFieldMoves = Arrays.asList(
+            Moves.cut, Moves.fly, Moves.surf, Moves.strength, Moves.flash, Moves.dig, Moves.teleport,
+            Moves.whirlpool, Moves.waterfall, Moves.rockSmash, Moves.headbutt, Moves.sweetScent, Moves.rockClimb);
+
+    public static final List<Integer> dpptEarlyRequiredHMMoves = Arrays.asList(Moves.rockSmash, Moves.cut);
+
+    public static final List<Integer> hgssEarlyRequiredHMMoves = Collections.singletonList(Moves.cut);
 
     public static ItemList allowedItems, nonBadItems;
     public static List<Integer> regularShopItems, opShopItems;
 
     public static final String shedinjaSpeciesLocator = "492080000090281C0521";
 
-    public static final int ilexForestScriptFile = 92, ilexForestStringsFile = 115, headbuttTutorLongTextIndex = 16;
-    public static final List<Integer> headbuttTutorScriptOffsets = Arrays.asList(0xF55, 0xFC5, 0x100A),
-            headbuttTutorTextIndices = Arrays.asList(16, 17, 19, 23, 25, 26);
+    public static final int ilexForestScriptFile = 92, ilexForestStringsFile = 115;
+    public static final List<Integer> headbuttTutorScriptOffsets = Arrays.asList(0xF55, 0xFC5, 0x100A, 0x104C);
 
     private static final String doubleBattleFixPrefixDP = "022912D90221214201", doubleBattleFixPrefixPt = "022919D90221214205",
             doubleBattleFixPrefixHGSS = "2C2815D00221214201";
@@ -334,6 +726,14 @@ public class Gen4Constants {
     public static final String feebasLevelPrefixDPPt = "019813B0F0BD", honeyTreeLevelPrefixDPPt = "F0BDF0B589B0051C0C1C";
 
     private static final String runningShoesCheckPrefixDPPt = "281C0C24", runningShoesCheckPrefixHGSS = "301C0C24";
+
+    public static final String distortionWorldGroundCheckPrefix = "23D849187944C988090409148F44";
+
+    public static final List<String> dpptIntroPrefixes = Arrays.asList("381CF8BDC046", "08B0F8BD");
+
+    public static final String hpBarSpeedPrefix = "0CD106200090", expBarSpeedPrefix = "011C00D101212E6C", bothBarsSpeedPrefix = "70BD90421DDA";
+
+    public static final String typeEffectivenessTableLocator = "000505000805";
 
     private static final int trophyGardenGrassEncounterIndexDP = 304, trophyGardenGrassEncounterIndexPt = 308;
     private static final List<Integer> marshGrassEncounterIndicesDP = Arrays.asList(76, 82, 88, 94, 100, 102),
@@ -440,7 +840,7 @@ public class Gen4Constants {
     public static final int pokedexAreaDataSize = 495;
     public static final int dpptMtCoronetDexIndex = 3, dpptGreatMarshDexIndex = 4, dpptTrophyGardenDexIndex = 14, dpptFloaromaMeadowDexIndex = 21;
     public static final List<Integer> dpptOverworldHoneyTreeDexIndicies = Arrays.asList(6, 7, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 34, 36, 37, 50);
-    public static final int hgssNationalParkDexIndex = 6;
+    public static final List<Integer> partnerTrainerIndices = Arrays.asList(608, 609, 610, 611, 612);
 
     static {
         setupAllowedItems();
@@ -516,6 +916,14 @@ public class Gen4Constants {
             return marshGrassEncounterIndicesDP;
         } else {
             return marshGrassEncounterIndicesPt;
+        }
+    }
+
+    public static int getTextCharsPerLine(int romType) {
+        if (romType == Gen4Constants.Type_HGSS) {
+            return hgssTextCharsPerLine;
+        } else {
+            return dpptTextCharsPerLine;
         }
     }
 
@@ -1175,10 +1583,10 @@ public class Gen4Constants {
     private static Map<Integer,Integer> setupCosmeticForms() {
         Map<Integer,Integer> cosmeticForms = new TreeMap<>();
 
-        cosmeticForms.put(201,28);
-        cosmeticForms.put(412,3);
-        cosmeticForms.put(422,2);
-        cosmeticForms.put(423,2);
+        cosmeticForms.put(Species.unown, 28);
+        cosmeticForms.put(Species.burmy, 3);
+        cosmeticForms.put(Species.shellos, 2);
+        cosmeticForms.put(Species.gastrodon, 2);
         return cosmeticForms;
     }
 
@@ -1228,20 +1636,20 @@ public class Gen4Constants {
         deoxysMap.put(1,494);
         deoxysMap.put(2,495);
         deoxysMap.put(3,496);
-        map.put(386,deoxysMap);
+        map.put(Species.deoxys, deoxysMap);
 
         Map<Integer,Integer> wormadamMap = new HashMap<>();
         wormadamMap.put(1,497);
         wormadamMap.put(2,498);
-        map.put(413,wormadamMap);
+        map.put(Species.wormadam, wormadamMap);
 
         Map<Integer,Integer> giratinaMap = new HashMap<>();
         giratinaMap.put(1,499);
-        map.put(487,giratinaMap);
+        map.put(Species.giratina, giratinaMap);
 
         Map<Integer,Integer> shayminMap = new HashMap<>();
         shayminMap.put(1,500);
-        map.put(492,shayminMap);
+        map.put(Species.shaymin, shayminMap);
 
         Map<Integer,Integer> rotomMap = new HashMap<>();
         rotomMap.put(1,501);
@@ -1249,7 +1657,7 @@ public class Gen4Constants {
         rotomMap.put(3,503);
         rotomMap.put(4,504);
         rotomMap.put(5,505);
-        map.put(479,rotomMap);
+        map.put(Species.rotom, rotomMap);
 
         return map;
     }
@@ -1503,11 +1911,9 @@ public class Gen4Constants {
         tag(trs, 0xa4, "KIMONO5-STRONG");
 
         // Themed
-        tag(trs, "THEMED:ARIANA-STRONG", 0x1df);
-        tag(trs, "THEMED:ARIANA-NOTSTRONG", 0x1de);
+        tag(trs, "THEMED:ARIANA-STRONG", 0x1df, 0x1de);
         tag(trs, "THEMED:PETREL-STRONG", 0x1e8, 0x1e7);
-        tag(trs, "THEMED:PROTON-STRONG", 0x1e6);
-        tag(trs, "THEMED:PROTON-NOTSTRONG", 0x2c2);
+        tag(trs, "THEMED:PROTON-STRONG", 0x1e6, 0x2c2);
         tag(trs, "THEMED:SPROUTTOWER", 0x2b, 0x33, 0x34, 0x35, 0x36, 0x37, 0x122);
 
         tag(trs,"LEADER",485); // Archer
@@ -1544,7 +1950,19 @@ public class Gen4Constants {
 
     }
 
-    public static void setCouldBeMultiBattleDP(List<Trainer> trs) {
+    public static void setMultiBattleStatusDP(List<Trainer> trs) {
+        // 407 + 528: Commander Mars and Commander Jupiter Multi Battle on Spear Pillar
+        // 414 + 415: Galactic Grunts in Jubilife City
+        // 419 + 426: Galactic Grunts in Lake Verity
+        // 420 + 427: Galactic Grunts in Lake Verity
+        // 521 + 527: Galactic Grunts on Spear Pillar
+        // 561 + 590: Double Battle with Dragon Tamer Drake and Black Belt Jarrett
+        // 835 + 836: Galactic Grunts in Iron Island
+        // 848 + 849: Galactic Grunts in Veilstone City
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 414, 415, 419, 420, 426, 427, 521, 527,
+                528, 561, 590, 835, 836, 848, 849
+        );
+
         // 34 + 35: Potential Double Battle with Camper Anthony and Picnicker Lauren
         // 82 + 83: Potential Double Battle with Rich Boy Jason and Lady Melissa
         // 84 + 85: Potential Double Battle with Gentleman Jeremy and Socialite Reina
@@ -1568,17 +1986,12 @@ public class Gen4Constants {
         // 395 + 398: Potential Double Battle with Psychic Kody and Psychic Rachael
         // 396 + 399: Potential Double Battle with Psychic Landon and Psychic Desiree
         // 397 + 400: Potential Double Battle with Psychic Deandre and Psychic Kendra
-        // 407 + 528: Commander Mars and Commander Jupiter Multi Battle on Spear Pillar
-        // 414 + 415: Galactic Grunts in Jubilife City
-        // 419 + 426: Galactic Grunts in Lake Verity
-        // 420 + 427: Galactic Grunts in Lake Verity
         // 446 + 499: Potential Double Battle with Black Belt Eddie and Veteran Terrell
         // 447 + 500: Potential Double Battle with Black Belt Willie and Veteran Brenden
         // 450 + 496: Potential Double Battle with Lass Cassidy and Youngster Wayne
         // 452 + 453: Potential Double Battle with Hiker Damon and Hiker Maurice
         // 454 + 455: Potential Double Battle with Hiker Reginald and Hiker Lorenzo
         // 505 + 506: Potential Double Battle with Worker Brendon and Worker Quentin
-        // 521 + 527: Galactic Grunts on Spear Pillar
         // 555 + 560: Potential Double Battle with Bird Keeper Geneva and Dragon Tamer Stanley
         // 556 + 589: Potential Double Battle with Bird Keeper Krystal and Black Belt Ray
         // 562 + 606: Potential Double Battle with Dragon Tamer Kenny and Veteran Harlan
@@ -1588,51 +2001,52 @@ public class Gen4Constants {
         // 571 + 581: Potential Double Battle with Ace Trainer Skylar and Ace Trainer Natasha
         // 572 + 582: Potential Double Battle with Ace Trainer Abel and Ace Trainer Monique
         // 584 + 586: Potential Double Battle with Psychic Sterling and Psychic Chelsey
-        // 561 + 590: Potential Double Battle with Dragon Tamer Drake and Black Belt Jarrett
         // 591 + 596: Potential Double Battle with PKMN Ranger Kyler and PKMN Ranger Krista
         // 594 + 554/585: Potential Double Battle with PKMN Ranger Ashlee and either Bird Keeper Audrey or Psychic Daisy
         // 599 + 602: Potential Double Battle with Swimmer Sam and Swimmer Sophia
-        // 835 + 836: Galactic Grunts in Iron Island
-        // 848 + 849: Galactic Grunts in Veilstone City
-        setCouldBeMultiBattle(trs, 34, 35, 82, 83, 84, 85, 95, 96, 104, 106, 160, 186, 191, 201, 202, 203,
-                204, 205, 206, 278, 287, 337, 358, 359, 360, 372, 373, 379, 383, 386, 388, 389, 390, 392, 393, 394,
-                395, 396, 397, 398, 399, 400, 407, 414, 415, 419, 420, 426, 427, 443, 445, 446, 447, 450, 452, 453,
-                454, 455, 459, 494, 496, 499, 500, 505, 506, 521, 527, 528, 554, 555, 556, 560, 561, 562, 566, 569,
-                570, 571, 572, 575, 579, 580, 581, 582, 584, 585, 586, 589, 590, 591, 594, 596, 599, 602, 606, 835,
-                836, 848, 849);
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.POTENTIAL, 34, 35, 82, 83, 84, 85, 95, 96, 104,
+                106, 160, 186, 191, 201, 202, 203, 204, 205, 206, 278, 287, 337, 358, 359, 360, 372, 373, 379, 383, 386,
+                388, 389, 390, 392, 393, 394, 395, 396, 397, 398, 399, 400, 443, 445, 446, 447, 450, 452, 453, 454, 455,
+                459, 494, 496, 499, 500, 505, 506, 554, 555, 556, 560, 562, 566, 569, 570, 571, 572, 575, 579, 580, 581,
+                582, 584, 585, 586, 589, 591, 594, 596, 599, 602, 606
+        );
     }
 
-    public static void setCouldBeMultiBattlePt(List<Trainer> trs) {
+    public static void setMultiBattleStatusPt(List<Trainer> trs) {
         // In addition to every single trainer listed in setCouldBeMultiBattleDP...
         // 921 + 922: Elite Four Flint and Leader Volkner Multi Battle in the Fight Area
-        setCouldBeMultiBattle(trs, 34, 35, 82, 83, 84, 85, 95, 96, 104, 106, 160, 186, 191, 201, 202, 203,
-                204, 205, 206, 278, 287, 337, 358, 359, 360, 372, 373, 379, 383, 386, 388, 389, 390, 392, 393, 394,
-                395, 396, 397, 398, 399, 400, 407, 414, 415, 419, 420, 426, 427, 443, 445, 446, 447, 450, 452, 453,
-                454, 455, 459, 494, 496, 499, 500, 505, 506, 521, 527, 528, 554, 555, 556, 560, 561, 562, 566, 569,
-                570, 571, 572, 575, 579, 580, 581, 582, 584, 585, 586, 589, 590, 591, 594, 596, 599, 602, 606, 835,
-                836, 848, 849, 921, 922);
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 414, 415, 419, 420, 426, 427, 521, 527,
+                528, 561, 590, 835, 836, 848, 849, 921, 922
+        );
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.POTENTIAL, 34, 35, 82, 83, 84, 85, 95, 96, 104,
+                106, 160, 186, 191, 201, 202, 203, 204, 205, 206, 278, 287, 337, 358, 359, 360, 372, 373, 379, 383, 386,
+                388, 389, 390, 392, 393, 394, 395, 396, 397, 398, 399, 400, 443, 445, 446, 447, 450, 452, 453, 454, 455,
+                459, 494, 496, 499, 500, 505, 506, 554, 555, 556, 560, 562, 566, 569, 570, 571, 572, 575, 579, 580, 581,
+                582, 584, 585, 586, 589, 591, 594, 596, 599, 602, 606
+        );
     }
 
-    public static void setCouldBeMultiBattleHGSS(List<Trainer> trs) {
+    public static void setMultiBattleStatusHGSS(List<Trainer> trs) {
         // 120 + 417: Double Battle with Ace Trainer Irene and Ace Trainer Jenn
+        // 354 + 355: Double Battle with Lass Laura and Lass Shannon
+        // 479 + 499: Multi Battle with Executive Ariana and Team Rocket Grunt in Team Rocket HQ
+        // 679 + 680: Double Battle with Beauty Callie and Beauty Kassandra
+        // 733 + 734: Multi Battle with Champion Lance and Leader Clair in the Dragon's Den
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.ALWAYS, 120, 354, 355, 417, 479, 499, 679, 680, 733, 734);
+
         // 147 + 151: Potential Double Battle with Camper Ted and Picnicker Erin
-        // 354 + 355: Potential Double Battle with Lass Laura and Lass Shannon
         // 423: Potential Double Battle with Pokéfan Jeremy. His potential teammate (Pokéfan Georgia) has more than
         // three Pokemon in the vanilla game, so we leave her be.
-        // 479 + 499: Multi Battle with Executive Ariana and Team Rocket Grunt in Team Rocket HQ
         // 564 + 567: Potential Double Battle with Teacher Clarice and School Kid Torin
         // 575 + 576: Potential Double Battle with Biker Dan and Biker Theron
         // 577 + 579: Potential Double Battle with Biker Markey and Biker Teddy
-        // 679 + 680: Double Battle with Beauty Callie and Beauty Kassandra
-        // 733 + 734: Multi Battle with Champion Lance and Leader Clair in the Dragon's Den
-        setCouldBeMultiBattle(trs, 120, 147, 151, 354, 355, 417, 423, 479, 499, 564, 567, 575, 576, 577,
-                579, 679, 680, 733, 734);
+        setMultiBattleStatus(trs, Trainer.MultiBattleStatus.POTENTIAL, 147, 151, 423, 564, 567, 575, 576, 577, 579);
     }
 
-    private static void setCouldBeMultiBattle(List<Trainer> allTrainers, int... numbers) {
+    private static void setMultiBattleStatus(List<Trainer> allTrainers, Trainer.MultiBattleStatus status, int... numbers) {
         for (int num : numbers) {
             if (allTrainers.size() > (num - 1)) {
-                allTrainers.get(num - 1).couldBeMultiBattle = true;
+                allTrainers.get(num - 1).multiBattleStatus = status;
             }
         }
     }
