@@ -180,6 +180,7 @@ public class Randomizer {
             logEvolutionChanges(log);
         }
 
+        settings.setBaseStatisticsMod(Settings.BaseStatisticsMod.LOG_NORM); //Forces my version (remove this line and reset the method to private)
         // Base stat randomization
         switch (settings.getBaseStatisticsMod()) {
             case SHUFFLE:
@@ -188,6 +189,10 @@ public class Randomizer {
                 break;
             case RANDOM:
                 romHandler.randomizePokemonStats(settings);
+                pokemonTraitsChanged = true;
+                break;
+            case LOG_NORM:
+                romHandler.randomizePokemonStats_Log(settings);
                 pokemonTraitsChanged = true;
                 break;
             default:
@@ -313,6 +318,7 @@ public class Randomizer {
         // 3. Randomize Trainer Pokemon
         // 4. Modify rivals to carry starters
         // 5. Force Trainer Pokemon to be fully evolved
+        // 6. Add bosses pokemon to gyms/e4/champions
 
         if (settings.getAdditionalRegularTrainerPokemon() > 0
                 || settings.getAdditionalImportantTrainerPokemon() > 0
@@ -355,6 +361,11 @@ public class Randomizer {
 
         if (settings.isTrainersForceFullyEvolved()) {
             romHandler.forceFullyEvolvedTrainerPokes(settings);
+            trainersChanged = true;
+        }
+
+        if(true) {
+            romHandler.bossAcePokemon(settings);
             trainersChanged = true;
         }
 
@@ -884,7 +895,7 @@ public class Randomizer {
             for (int i = 0; i < abils; i++) {
                 log.print("|ABILITY" + (i + 1) + abSp);
             }
-            log.print("|ITEM");
+            log.print("| EVO|ITEM");
             log.println();
             int i = 0;
             for (Pokemon pkmn : allPokes) {
@@ -903,6 +914,10 @@ public class Randomizer {
                             log.printf("|" + abSpFormat, romHandler.abilityName(pkmn.ability3));
                         }
                     }
+                    // Added extra logging for measurement
+                    String evoString = pkmn.evolutionsFrom.size() == 0? "FULL":(pkmn.evolutionsTo.size()==0?"BASE":"MID");
+                    log.printf("|%-4s", evoString);
+                    //end extra logging
                     log.print("|");
                     if (pkmn.guaranteedHeldItem > 0) {
                         log.print(itemNames[pkmn.guaranteedHeldItem] + " (100%)");

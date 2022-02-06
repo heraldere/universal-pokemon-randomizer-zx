@@ -66,7 +66,7 @@ public class Settings {
     private boolean limitPokemon;
 
     public enum BaseStatisticsMod {
-        UNCHANGED, SHUFFLE, RANDOM,
+        UNCHANGED, SHUFFLE, RANDOM, LOG_NORM
     }
 
     public enum ExpCurveMod {
@@ -358,7 +358,9 @@ public class Settings {
         // 1: pokemon base stats & abilities
         out.write(makeByteSelected(baseStatsFollowEvolutions, baseStatisticsMod == BaseStatisticsMod.RANDOM,
                 baseStatisticsMod == BaseStatisticsMod.SHUFFLE, baseStatisticsMod == BaseStatisticsMod.UNCHANGED,
-                standardizeEXPCurves, updateBaseStats, baseStatsFollowMegaEvolutions));
+                standardizeEXPCurves, updateBaseStats, baseStatsFollowMegaEvolutions,
+                baseStatisticsMod == BaseStatisticsMod.LOG_NORM // This is where the fun happens
+                ));
 
         // 2: pokemon types & more general options
         out.write(makeByteSelected(typesMod == TypesMod.RANDOM_FOLLOW_EVOLUTIONS,
@@ -597,7 +599,8 @@ public class Settings {
 
         settings.setBaseStatisticsMod(restoreEnum(BaseStatisticsMod.class, data[1], 3, // UNCHANGED
                 2, // SHUFFLE
-                1 // RANDOM
+                1, // RANDOM
+                7  // LOG_NORM (Bootleg style)
         ));
         settings.setStandardizeEXPCurves(restoreState(data[1], 4));
         settings.setBaseStatsFollowEvolutions(restoreState(data[1], 0));
@@ -1105,7 +1108,7 @@ public class Settings {
         setBaseStatisticsMod(getEnum(BaseStatisticsMod.class, bools));
     }
 
-    private void setBaseStatisticsMod(BaseStatisticsMod baseStatisticsMod) {
+    void setBaseStatisticsMod(BaseStatisticsMod baseStatisticsMod) {
         this.baseStatisticsMod = baseStatisticsMod;
     }
 

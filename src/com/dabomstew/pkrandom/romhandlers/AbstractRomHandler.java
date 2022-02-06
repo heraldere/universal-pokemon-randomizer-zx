@@ -29,6 +29,7 @@ package com.dabomstew.pkrandom.romhandlers;
 /*----------------------------------------------------------------------------*/
 
 import java.io.PrintStream;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -321,6 +322,40 @@ public abstract class AbstractRomHandler implements RomHandler {
                 if (megaEvo.from.megaEvolutionsFrom.size() > 1) continue;
                 megaEvo.to.copyRandomizedStatsUpEvolution(megaEvo.from);
             }
+        }
+    }
+
+    /**
+     * Randomizes fully evolved pokemon base stat totals according to a log normal distribution independent of whether
+     * they were legendary/mythical or not.
+     *
+     * Non-fully evolved pokemon will have a percentage (50%-75%) multiplier of their evolutions' BST
+     *
+     * Mega Evolutions will have a random number added to their BSTs (75 - 100)
+     */
+    @Override
+    public void randomizePokemonStats_Log(Settings settings) {
+        //On outset, I'm assuming that the EvosFrom and EvosTo fields are entirely distinct from the Mega versions
+
+        // We need to start with the pokemon that don't evolve
+
+        //TODO: Figure out what to do about alt formes
+        List<Pokemon> sortedList = new ArrayList<>(mainPokemonList);
+        sortedList.sort(Comparator.comparingInt(o -> o.getEvFromDepth() + o.megaEvolutionsTo.size()));
+        List<Pokemon> fullyEvolvedPokemon = sortedList
+                .stream()
+                .filter(o -> o.evolutionsFrom.size() + o.megaEvolutionsTo.size() == 0 )
+                .collect(Collectors.toList());
+        Pokemon boss = fullyEvolvedPokemon.get(random.nextInt(fullyEvolvedPokemon.size()));
+
+        for(Pokemon poke: sortedList){
+            if(poke != null){
+                poke.randomizeStatsLogNorm(this.random, boss);
+            }
+        }
+
+        for(Pokemon form: altFormesList) {
+            form.randomizeStatsLogNorm(this.random, boss);
         }
     }
 
@@ -1931,6 +1966,52 @@ public abstract class AbstractRomHandler implements RomHandler {
 
         // Save it all up
         this.setTrainers(currentTrainers, false);
+    }
+
+    @Override
+    public void bossAcePokemon(Settings settings) {
+        List<Trainer> currentTrainers = this.getTrainers();
+        ArrayList<ArrayList<Trainer>> bossSets = getBossSet(currentTrainers);
+
+        // First we need a sorted list of all the pokemon by bst
+        ArrayList<Pokemon> pokesDescendingPower = new ArrayList<Pokemon>(mainPokemonList);
+        pokesDescendingPower.sort((o1, o2) -> o2.bst() - o1.bst());
+
+        //we're assuming that the list is in sorted order with the final boss being first (bad coding but oh well)
+        boolean finalBoss = true;
+        int bossMonIdx = 0;
+        for (ArrayList<Trainer> tl: bossSets) {
+            if(finalBoss) {
+                for(Trainer t: tl) {
+                    bossMonIdx = Math.max(bossMonIdx, t.pokemon.size());
+                    //Get sorted list of boss pokemon by level
+                    List<TrainerPokemon> mons = new ArrayList<TrainerPokemon>(t.pokemon);
+                    mons.sort((p1, p2) -> p2.level - p1.level);
+                    for(int i = 0; i < t.pokemon.size(); i++) {
+                        TrainerPokemon mon = t.pokemon.get(i);
+                        mon.pokemon = pokesDescendingPower.get(i);
+                    }
+                }
+                finalBoss = false;
+            } else {
+                for(Trainer t: tl) {
+                    List<TrainerPokemon> mons = new ArrayList<TrainerPokemon>(t.pokemon);
+                    mons.sort((p1, p2) -> p2.level - p1.level);
+                    TrainerPokemon ace = mons.get(0);
+                    ace.pokemon = pokesDescendingPower.get(bossMonIdx);
+                }
+                bossMonIdx++;
+            }
+        }
+        this.setTrainers(currentTrainers, false);
+    }
+
+    /**
+     *
+     * @return a list of significant bosses in the rom, starting with the final boss and going downward.
+     */
+    protected ArrayList<ArrayList<Trainer>> getBossSet(List<Trainer> trainers) {
+        return new ArrayList<>();
     }
 
     @Override

@@ -5074,4 +5074,34 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         }
         return items;
     }
+
+    @Override
+    protected ArrayList<ArrayList<Trainer>> getBossSet(List<Trainer> trainers) {
+        ArrayList<ArrayList<Trainer>> res = new ArrayList<>();
+
+        // Kudos to whomever tagged all of the significant trainers. You've made my life easier <3
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("UBER"))        .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM16-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM15-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM14-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM13-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM12-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM11-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM10-LEADER")).collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM9-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("CHAMPION"))    .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE4"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE3"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE2"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE1"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM8-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM7-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM6-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM5-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM4-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM3-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM2-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM1-LEADER")) .collect(Collectors.toList())));
+        return res;
+    }
 }

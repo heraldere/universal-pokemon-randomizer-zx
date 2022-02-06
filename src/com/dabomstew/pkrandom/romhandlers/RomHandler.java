@@ -121,6 +121,9 @@ public interface RomHandler {
     // tooltips)
     void randomizePokemonStats(Settings settings);
 
+    // Randomize stats following a log_normal distribution (see implementation in AbstractRomHandler)
+    void randomizePokemonStats_Log(Settings settings);
+
     // Update base stats to gen6
     void updatePokemonStats(Settings settings);
 
@@ -202,6 +205,8 @@ public interface RomHandler {
     void setTrainers(List<Trainer> trainerData, boolean doubleBattleMode);
 
     void randomizeTrainerPokes(Settings settings);
+
+    void bossAcePokemon(Settings settings);
 
     void typeThemeTrainerPokes(Settings settings);
 

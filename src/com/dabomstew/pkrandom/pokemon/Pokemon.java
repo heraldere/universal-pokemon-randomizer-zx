@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Pokemon implements Comparable<Pokemon> {
 
@@ -164,6 +165,154 @@ public class Pokemon implements Comparable<Pokemon> {
 
     }
 
+    public void randomizeStatsLogNorm(Random random, Pokemon boss) {
+        // Get a new bst, and a "role" (specialist vs generalist)
+        int new_bst = pickNewBSTLogNorm(random, boss);
+        double role_modifier = random.nextDouble();
+        System.out.printf("%15s%4.3f\n", name, role_modifier);
+        double atkW = getStatRatio(random, role_modifier), defW = getStatRatio(random, role_modifier);
+        double spaW = getStatRatio(random, role_modifier), spdW = getStatRatio(random, role_modifier);
+        double speW = getStatRatio(random, role_modifier), hpW  = getStatRatio(random, role_modifier);
+
+        if(number == Species.shedinja){
+            new_bst *= 5.0/6;
+            double[] weightsArr = {atkW, defW, spaW, spdW, speW};
+            double totW = atkW + defW + spaW + spdW + speW;
+
+            // Because shedinja is special
+            hp = 1;
+            attack = Math.max(10, Math.min(255, (int) Math.round(new_bst * atkW/totW)));
+            defense = Math.max(10, Math.min(255, (int) Math.round(new_bst * defW/totW)));
+            spatk = Math.max(10, Math.min(255, (int) Math.round(new_bst * spaW/totW)));
+            spdef = Math.max(10, Math.min(255, (int) Math.round(new_bst * spdW/totW)));
+            speed = Math.max(10, Math.min(255, (int) Math.round(new_bst * speW/totW)));
+
+            int loops = 0;
+            while(new_bst - bst() > 10 && loops < 5) {
+                int diff = new_bst - bst();
+                totW = 0;
+                int[] statArr = {attack, defense, spatk, spdef, speed};
+                for(int i = 0; i < statArr.length; i++) {
+                    if (statArr[i] < 255) {
+                        totW += weightsArr[i];
+                    }
+                }
+
+                attack = Math.min(255, (int) Math.round(attack + atkW/totW*diff));
+                defense = Math.min(255, (int) Math.round(defense + defW/totW*diff));
+                spatk = Math.min(255, (int) Math.round(spatk + spaW/totW*diff));
+                spdef = Math.min(255, (int) Math.round(spdef + spdW/totW*diff));
+                speed = Math.min(255, (int) Math.round(speed + speW/totW*diff));
+
+                loops++;
+            }
+        } else {
+            double[] weightsArr = {hpW, atkW, defW, spaW, spdW, speW};
+            double totW = hpW + atkW + defW + spaW + spdW + speW;
+
+            // Because shedinja is special
+            hp = Math.max(20, Math.min(255, (int) Math.round(new_bst * hpW/totW)));
+            attack = Math.max(10, Math.min(255, (int) Math.round(new_bst * atkW/totW)));
+            defense = Math.max(10, Math.min(255, (int) Math.round(new_bst * defW/totW)));
+            spatk = Math.max(10, Math.min(255, (int) Math.round(new_bst * spaW/totW)));
+            spdef = Math.max(10, Math.min(255, (int) Math.round(new_bst * spdW/totW)));
+            speed = Math.max(10, Math.min(255, (int) Math.round(new_bst * speW/totW)));
+
+            int loops = 0;
+            while(new_bst - bst() > 10 && loops < 5) {
+                int diff = new_bst - bst();
+                totW = 0;
+                int[] statArr = {hp, attack, defense, spatk, spdef, speed};
+                for (int i = 0; i < statArr.length; i++) {
+                    if (statArr[i] < 255) {
+                        totW += weightsArr[i];
+                    }
+                }
+
+                hp = Math.min(255, (int) Math.round(hp + hpW / totW * diff));
+                attack = Math.min(255, (int) Math.round(attack + atkW / totW * diff));
+                defense = Math.min(255, (int) Math.round(defense + defW / totW * diff));
+                spatk = Math.min(255, (int) Math.round(spatk + spaW / totW * diff));
+                spdef = Math.min(255, (int) Math.round(spdef + spdW / totW * diff));
+                speed = Math.min(255, (int) Math.round(speed + speW / totW * diff));
+
+                loops++;
+            }
+        }
+    }
+
+    /**
+     * Picks a new BST total, depending on whether this is a Mega, fully evolved, or neither
+     * @return
+     */
+    private int pickNewBSTLogNorm(Random random, Pokemon boss) {
+        int res;
+
+        // TODO: Extract this part, remove the boss parameter and place this in Randomizer.java
+        if (this.equals(boss)) {
+            res = 800 + random.nextInt(101);
+        }
+        else if(baseForme != null) {
+            res = baseForme.bst();
+        }
+        else if (evolutionsFrom.size() == 0 && megaEvolutionsTo.size() == 0) {
+            res = generateLogNormBST(random);
+        }
+        else if(megaEvolutionsTo.size() > 0) {
+            // I think it's fun if megas aren't a strict upgrade (may not be fun, so open to change)
+            res = megaEvolutionsTo.get(0).from.bst() + random.nextInt(151);
+        } else {
+
+            int evMin = Collections.min(
+                    evolutionsFrom.stream()
+                            .map(evoFrom -> evoFrom.to.bst())
+                            .collect(Collectors.toList()));
+            int steps = getEvToDepth() + 2;
+            int maxPossibleValue = Math.min(evMin, 600);
+            int minPossibleValue = 180;
+            int stepSize = (maxPossibleValue - minPossibleValue)/steps;
+            int midPoint = minPossibleValue + (steps - 1) * stepSize;
+            int range = ((maxPossibleValue - midPoint) * 5) / 6;
+
+            int upperBound = midPoint + range;
+            int lowerBound = midPoint - range;
+
+            int diff = Math.max(upperBound - lowerBound, 1);
+            res = random.nextInt(diff) + lowerBound;
+            if(res < 120) {
+                System.out.println(res);
+            }
+        }
+        return res;
+    }
+
+    private int generateLogNormBST(Random random) {
+        double norm = random.nextGaussian();
+
+        // Set parameters of distribution:
+
+        // Minimum value (it is impossible to return something lower than this)
+        int minimum = 300;
+
+        // Half of all values will be lower/higher than this (on average)
+        int median = 500;
+
+        // Represents a remarkably high value we would expect to see in the distribution
+        int high_value = 700;
+
+        // How often we want to see that remarkably high value (as a z-score)
+        double z_score = 2.1701; // this z score corresponds to (2.3263 for 1%, 1.2816 for 10%).
+
+        return (int) Math.round(minimum + (median - minimum) * Math.pow((high_value - minimum + 0.0)/(median - minimum + 0.0), (norm / z_score)));
+    }
+
+    private double getStatRatio(Random random, double roleModifier) {
+        double x = random.nextDouble();
+        double maxRatio = 8.5;
+        double offset = 1.0/(maxRatio - 1);
+        return (1.0/(2*Math.PI)) * (2*roleModifier - 1) * Math.sin(2*Math.PI*x) + x + offset;
+    }
+
     public void copyRandomizedStatsUpEvolution(Pokemon evolvesFrom) {
         double ourBST = bst();
         double theirBST = evolvesFrom.bst();
@@ -180,7 +329,7 @@ public class Pokemon implements Comparable<Pokemon> {
         special = (int) Math.ceil((spatk + spdef) / 2.0f);
     }
 
-    private int bst() {
+    public int bst() {
         return hp + attack + defense + spatk + spdef + speed;
     }
 
@@ -191,6 +340,23 @@ public class Pokemon implements Comparable<Pokemon> {
         } else {
             return hp + attack + defense + spatk + spdef + speed;
         }
+    }
+
+    public int getEvFromDepth() {
+        int max_depth = 0;
+        for(Evolution evFrom: evolutionsFrom) {
+            max_depth = Math.max(max_depth, 1 + evFrom.to.getEvFromDepth());
+        }
+        return max_depth;
+    }
+
+    public int getEvToDepth() {
+        int max_depth = 0;
+        // Might be a reduction formula to do this, but I can't be bothered right now
+        for(Evolution evTo: evolutionsTo) {
+            max_depth = Math.max(max_depth, 1 + evTo.from.getEvToDepth());
+        }
+        return max_depth;
     }
 
     public void copyBaseFormeBaseStats(Pokemon baseForme) {
