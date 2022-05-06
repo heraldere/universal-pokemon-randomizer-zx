@@ -34,7 +34,6 @@ import com.dabomstew.pkrandom.pokemon.Type;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.RandomAccessFile;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Random;
@@ -44,11 +43,6 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
     private NCCH baseRom;
     private NCCH gameUpdate;
     private String loadedFN;
-
-    private static final int ncch_magic = 0x4E434348;
-    private static final int ncsd_magic = 0x4E435344;
-    private static final int cia_header_size = 0x2020;
-    private static final int ncch_and_ncsd_magic_offset = 0x100;
 
     public Abstract3DSRomHandler(Random random, PrintStream logStream) {
         super(random, logStream);
@@ -63,7 +57,7 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
         }
         // Load inner rom
         try {
-            baseRom = new NCCH(filename, getCXIOffsetInFile(filename), productCode, titleId);
+            baseRom = new NCCH(filename, productCode, titleId);
             if (!baseRom.isDecrypted()) {
                 throw new EncryptedROMException(filename);
             }
@@ -110,6 +104,8 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
         return true;
     }
 
+    protected abstract boolean isGameUpdateSupported(int version);
+
     @Override
     public boolean hasGameUpdateLoaded() {
         return gameUpdate != null;
@@ -120,9 +116,13 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
         String productCode = getProductCodeFromFile(filename);
         String titleId = getTitleIdFromFile(filename);
         try {
-            gameUpdate = new NCCH(filename, getCXIOffsetInFile(filename), productCode, titleId);
+            gameUpdate = new NCCH(filename, productCode, titleId);
             if (!gameUpdate.isDecrypted()) {
                 throw new EncryptedROMException(filename);
+            }
+            int version = gameUpdate.getVersion();
+            if (!this.isGameUpdateSupported(version)) {
+                System.out.println("Game Update: Supplied unexpected version " + version);
             }
         } catch (IOException e) {
             throw new RandomizerIOException(e);
@@ -246,60 +246,9 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
         return baseRom.getTitleId();
     }
 
-    // At the bare minimum, a 3DS game consists of what's known as a CXI file, which
-    // is just an NCCH that contains executable code. However, 3DS games are packaged
-    // in various containers that can hold other NCCH files like the game manual and
-    // firmware updates, among other things. This function's determines the location
-    // of the CXI regardless of the container.
-    protected static long getCXIOffsetInFile(String filename) {
-        try {
-            RandomAccessFile rom = new RandomAccessFile(filename, "r");
-            int ciaHeaderSize = FileFunctions.readLittleEndianIntFromFile(rom, 0x00);
-            if (ciaHeaderSize == cia_header_size) {
-                // This *might* be a CIA; let's do our best effort to try to get
-                // a CXI out of this.
-                int certChainSize = FileFunctions.readLittleEndianIntFromFile(rom, 0x08);
-                int ticketSize = FileFunctions.readLittleEndianIntFromFile(rom, 0x0C);
-                int tmdFileSize = FileFunctions.readLittleEndianIntFromFile(rom, 0x10);
-
-                // If this is *really* a CIA, we'll find our CXI at the beginning of the
-                // content section, which is after the certificate chain, ticket, and TMD
-                long certChainOffset = NCCH.alignLong(ciaHeaderSize, 64);
-                long ticketOffset = NCCH.alignLong(certChainOffset + certChainSize, 64);
-                long tmdOffset = NCCH.alignLong(ticketOffset + ticketSize, 64);
-                long contentOffset = NCCH.alignLong(tmdOffset + tmdFileSize, 64);
-                int magic = FileFunctions.readIntFromFile(rom, contentOffset + ncch_and_ncsd_magic_offset);
-                if (magic == ncch_magic) {
-                    // This CIA's content contains a valid CXI!
-                    return contentOffset;
-                }
-            }
-
-            // We don't put the following code in an else-block because there *might*
-            // exist a totally-valid CXI or CCI whose first four bytes just so
-            // *happen* to be the same as the first four bytes of a CIA file.
-            int magic = FileFunctions.readIntFromFile(rom, ncch_and_ncsd_magic_offset);
-            rom.close();
-            if (magic == ncch_magic) {
-                // Magic is NCCH, so this just a straight-up NCCH/CXI; there is no container
-                // around the game data. Thus, the CXI offset is the beginning of the file.
-                return 0;
-            } else if (magic == ncsd_magic) {
-                // Magic is NCSD, so this is almost certainly a CCI. The CXI is always
-                // a fixed distance away from the start.
-                return 0x4000;
-            } else {
-                // This doesn't seem to be a valid 3DS file.
-                return -1;
-            }
-        } catch (IOException e) {
-            throw new RandomizerIOException(e);
-        }
-    }
-
     protected static String getProductCodeFromFile(String filename) {
         try {
-            long ncchStartingOffset = getCXIOffsetInFile(filename);
+            long ncchStartingOffset = NCCH.getCXIOffsetInFile(filename);
             if (ncchStartingOffset == -1) {
                 return null;
             }
@@ -315,7 +264,7 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
 
     public static String getTitleIdFromFile(String filename) {
         try {
-            long ncchStartingOffset = getCXIOffsetInFile(filename);
+            long ncchStartingOffset = NCCH.getCXIOffsetInFile(filename);
             if (ncchStartingOffset == -1) {
                 return null;
             }

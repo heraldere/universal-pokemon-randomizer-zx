@@ -74,6 +74,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         private int version, nonJapanese;
         private String extraTableFile;
         private boolean isCrystal;
+        private long expectedCRC32 = -1;
         private int crcInHeader = -1;
         private Map<String, String> codeTweaks = new HashMap<>();
         private List<TMTextEntry> tmTexts = new ArrayList<>();
@@ -153,6 +154,8 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                             current.extraTableFile = r[1];
                         } else if (r[0].equals("CRCInHeader")) {
                             current.crcInHeader = parseRIInt(r[1]);
+                        } else if (r[0].equals("CRC32")) {
+                            current.expectedCRC32 = parseRILong("0x" + r[1]);
                         } else if (r[0].endsWith("Tweak")) {
                             current.codeTweaks.put(r[0], r[1]);
                         } else if (r[0].equals("CopyFrom")) {
@@ -249,6 +252,21 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         }
     }
 
+    private static long parseRILong(String off) {
+        int radix = 10;
+        off = off.trim().toLowerCase();
+        if (off.startsWith("0x") || off.startsWith("&h")) {
+            radix = 16;
+            off = off.substring(2);
+        }
+        try {
+            return Long.parseLong(off, radix);
+        } catch (NumberFormatException ex) {
+            System.err.println("invalid base " + radix + "number " + off);
+            return 0;
+        }
+    }
+
     // This ROM's data
     private Pokemon[] pokes;
     private List<Pokemon> pokemonList;
@@ -261,6 +279,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     private String[] landmarkNames;
     private boolean isVietCrystal;
     private ItemList allowedItems, nonBadItems;
+    private long actualCRC32;
 
     @Override
     public boolean detectRom(byte[] rom) {
@@ -276,7 +295,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     public void loadedRom() {
         romEntry = checkRomEntry(this.rom);
         clearTextTables();
-        readTextTable("gameboy_jap");
+        readTextTable("gameboy_jpn");
         if (romEntry.extraTableFile != null && !romEntry.extraTableFile.equalsIgnoreCase("none")) {
             readTextTable(romEntry.extraTableFile);
         }
@@ -297,6 +316,12 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         loadItemNames();
         allowedItems = Gen2Constants.allowedItems.copy();
         nonBadItems = Gen2Constants.nonBadItems.copy();
+        actualCRC32 = FileFunctions.getCRC32(rom);
+        // VietCrystal: exclude Burn Heal, Calcium, and Elixir
+        // crashes your game if used, glitches out your inventory if carried
+        if (isVietCrystal) {
+            allowedItems.banSingles(Gen2Items.burnHeal, Gen2Items.calcium, Gen2Items.elixer);
+        }
     }
 
     private static RomEntry checkRomEntry(byte[] rom) {
@@ -398,6 +423,20 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                 moves[i].hitCount = 2;
             } else if (i == Moves.tripleKick) {
                 moves[i].hitCount = 2.71; // this assumes the first hit lands
+            }
+
+            // Values taken from effect_priorities.asm from the Gen 2 disassemblies.
+            if (moves[i].effectIndex == Gen2Constants.priorityHitEffectIndex) {
+                moves[i].priority = 2;
+            } else if (moves[i].effectIndex == Gen2Constants.protectEffectIndex ||
+                       moves[i].effectIndex == Gen2Constants.endureEffectIndex) {
+                moves[i].priority = 3;
+            } else if (moves[i].effectIndex == Gen2Constants.forceSwitchEffectIndex ||
+                       moves[i].effectIndex == Gen2Constants.counterEffectIndex ||
+                       moves[i].effectIndex == Gen2Constants.mirrorCoatEffectIndex) {
+                moves[i].priority = 0;
+            } else {
+                moves[i].priority = 1;
             }
         }
 
@@ -897,6 +936,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public List<Integer> getEliteFourTrainers(boolean isChallengeMode) {
+        return new ArrayList<>();
+    }
+
+    @Override
     public void setTrainers(List<Trainer> trainerData, boolean doubleBattleMode) {
         int traineroffset = romEntry.getValue("TrainerDataTableOffset");
         int traineramount = romEntry.getValue("TrainerClassAmount");
@@ -985,6 +1029,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public List<Pokemon> getIrregularFormes() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public boolean hasFunctionalFormes() {
         return false;
     }
@@ -1027,6 +1076,45 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     @Override
     public List<Integer> getMovesBannedFromLevelup() {
         return Gen2Constants.bannedLevelupMoves;
+    }
+
+    @Override
+    public Map<Integer, List<Integer>> getEggMoves() {
+        Map<Integer, List<Integer>> eggMoves = new TreeMap<>();
+        int pointersOffset = romEntry.getValue("EggMovesTableOffset");
+        int baseOffset = (pointersOffset / 0x1000) * 0x1000;
+        for (int i = 1; i <= Gen2Constants.pokemonCount; i++) {
+            int eggMovePointer = FileFunctions.read2ByteInt(rom, pointersOffset + ((i - 1) * 2));
+            int eggMoveOffset = baseOffset + (eggMovePointer % 0x1000);
+            List<Integer> moves = new ArrayList<>();
+            int val = rom[eggMoveOffset] & 0xFF;
+            while (val != 0xFF) {
+                moves.add(val);
+                eggMoveOffset++;
+                val = rom[eggMoveOffset] & 0xFF;
+            }
+            if (moves.size() > 0) {
+                eggMoves.put(i, moves);
+            }
+        }
+        return eggMoves;
+    }
+
+    @Override
+    public void setEggMoves(Map<Integer, List<Integer>> eggMoves) {
+        int pointersOffset = romEntry.getValue("EggMovesTableOffset");
+        int baseOffset = (pointersOffset / 0x1000) * 0x1000;
+        for (int i = 1; i <= Gen2Constants.pokemonCount; i++) {
+            int eggMovePointer = FileFunctions.read2ByteInt(rom, pointersOffset + ((i - 1) * 2));
+            int eggMoveOffset = baseOffset + (eggMovePointer % 0x1000);
+            if (eggMoves.containsKey(i)) {
+                List<Integer> moves = eggMoves.get(i);
+                for (int move: moves) {
+                    rom[eggMoveOffset] = (byte) move;
+                    eggMoveOffset++;
+                }
+            }
+        }
     }
 
     private static class StaticPokemon {
@@ -1136,11 +1224,47 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
             int oeOffset = romEntry.getValue("StaticPokemonOddEggOffset");
             int oeSize = romEntry.getValue("StaticPokemonOddEggDataSize");
             for (int i = 0; i < Gen2Constants.oddEggPokemonCount; i++) {
-                rom[oeOffset + i * oeSize] = (byte) statics.next().pkmn.number;
+                int oddEggPokemonNumber = statics.next().pkmn.number;
+                rom[oeOffset + i * oeSize] = (byte) oddEggPokemonNumber;
+                setMovesForOddEggPokemon(oddEggPokemonNumber, oeOffset + i * oeSize);
             }
         }
 
         return true;
+    }
+
+    // This method depends on movesets being randomized before static Pokemon. This is currently true,
+    // but may not *always* be true, so take care.
+    private void setMovesForOddEggPokemon(int oddEggPokemonNumber, int oddEggPokemonOffset) {
+        // Determine the level 5 moveset, minus Dizzy Punch
+        Map<Integer, List<MoveLearnt>> movesets = this.getMovesLearnt();
+        List<Move> moves = this.getMoves();
+        List<MoveLearnt> moveset = movesets.get(oddEggPokemonNumber);
+        Queue<Integer> level5Moveset = new LinkedList<>();
+        int currentMoveIndex = 0;
+        while (moveset.size() > currentMoveIndex && moveset.get(currentMoveIndex).level <= 5) {
+            if (level5Moveset.size() == 4) {
+                level5Moveset.remove();
+            }
+            level5Moveset.add(moveset.get(currentMoveIndex).move);
+            currentMoveIndex++;
+        }
+
+        // Now add Dizzy Punch and write the moveset and PP
+        if (level5Moveset.size() == 4) {
+            level5Moveset.remove();
+        }
+        level5Moveset.add(Moves.dizzyPunch);
+        for (int i = 0; i < 4; i++) {
+            int move = 0;
+            int pp = 0;
+            if (level5Moveset.size() > 0) {
+                move = level5Moveset.remove();
+                pp = moves.get(move).pp; // This assumes the ordering of moves matches the internal order
+            }
+            rom[oddEggPokemonOffset + 2 + i] = (byte) move;
+            rom[oddEggPokemonOffset + 23 + i] = (byte) pp;
+        }
     }
 
     @Override
@@ -1468,7 +1592,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                         if (evol.from.number == Species.slowpoke) {
                             // Slowpoke: Make water stone => Slowking
                             evol.type = EvolutionType.STONE;
-                            evol.extraInfo = 24; // water stone
+                            evol.extraInfo = Gen2Items.waterStone;
                             addEvoUpdateStone(impossibleEvolutionUpdates, evol, itemNames[24]);
                         } else if (evol.from.number == Species.seadra) {
                             // Seadra: level 40
@@ -1509,12 +1633,12 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                     if (evol.type == EvolutionType.HAPPINESS_DAY) {
                         // Eevee: Make sun stone => Espeon
                         evol.type = EvolutionType.STONE;
-                        evol.extraInfo = 169; // sun stone
+                        evol.extraInfo = Gen2Items.sunStone;
                         addEvoUpdateStone(timeBasedEvolutionUpdates, evol, itemNames[169]);
                     } else if (evol.type == EvolutionType.HAPPINESS_NIGHT) {
                         // Eevee: Make moon stone => Umbreon
                         evol.type = EvolutionType.STONE;
-                        evol.extraInfo = 8; // moon stone
+                        evol.extraInfo = Gen2Items.moonStone;
                         addEvoUpdateStone(timeBasedEvolutionUpdates, evol, itemNames[8]);
                     }
                 }
@@ -1529,23 +1653,18 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public Map<Integer, List<Integer>> getShopItems() {
+    public Map<Integer, Shop> getShopItems() {
         return null; // Not implemented
     }
 
     @Override
-    public void setShopItems(Map<Integer, List<Integer>> shopItems) {
+    public void setShopItems(Map<Integer, Shop> shopItems) {
         // Not implemented
     }
 
     @Override
     public void setShopPrices() {
         // Not implemented
-    }
-
-    @Override
-    public List<Integer> getMainGameShops() {
-        return new ArrayList<>();
     }
 
     @Override
@@ -1615,6 +1734,14 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                     offsetsInNew[i] = oInNewCurrent;
                     for (int trnum = 0; trnum < limit; trnum++) {
                         String newName = allTrainers.next();
+
+                        // The game uses 0xFF as a signifier for the end of the trainer data.
+                        // It ALSO uses 0xFF to encode the character "9". If a trainer name has
+                        // "9" in it, this causes strange side effects where certain trainers
+                        // effectively get skipped when parsing trainer data. Silently strip out
+                        // "9"s from trainer names to prevent this from happening.
+                        newName = newName.replace("9", "").trim();
+
                         byte[] newNameStr = translateString(newName);
                         newData.write(newNameStr);
                         newData.write(GBConstants.stringTerminator);
@@ -1709,13 +1836,10 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public String[] getShopNames() {
-        return null;
-    }
-    @Override
     public List<Integer> getEvolutionItems() {
         return null;
     }
+
     @Override
     public void setTrainerClassNames(List<String> trainerClassNames) {
         if (romEntry.getValue("CanChangeTrainerText") != 0) {
@@ -1804,8 +1928,8 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         } else if (tweak == MiscTweak.RANDOMIZE_CATCHING_TUTORIAL) {
             randomizeCatchingTutorial();
         } else if (tweak == MiscTweak.BAN_LUCKY_EGG) {
-            allowedItems.banSingles(Gen2Constants.luckyEggIndex);
-            nonBadItems.banSingles(Gen2Constants.luckyEggIndex);
+            allowedItems.banSingles(Gen2Items.luckyEgg);
+            nonBadItems.banSingles(Gen2Items.luckyEgg);
         } else if (tweak == MiscTweak.UPDATE_TYPE_EFFECTIVENESS) {
             updateTypeEffectiveness();
         }
@@ -2321,7 +2445,13 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         int movesEvosStart = romEntry.getValue("PokemonMovesetsTableOffset");
         int movesEvosBank = bankOf(movesEvosStart);
         byte[] pointerTable = new byte[Gen2Constants.pokemonCount * 2];
-        int startOfNextBank = ((movesEvosStart / GBConstants.bankSize) + 1) * GBConstants.bankSize;
+        int startOfNextBank;
+        if (isVietCrystal) {
+            startOfNextBank = 0x43E00; // fix for pokedex crash
+        }
+        else {
+            startOfNextBank = ((movesEvosStart / GBConstants.bankSize) + 1) * GBConstants.bankSize;
+        }
         int dataBlockSize = startOfNextBank - (movesEvosStart + pointerTable.length);
         int dataBlockOffset = movesEvosStart + pointerTable.length;
         byte[] dataBlock = new byte[dataBlockSize];
@@ -2429,6 +2559,15 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public List<Integer> getIllegalMoves() {
+        // 3 moves that crash the game when used by self or opponent
+        if (isVietCrystal) {
+            return Gen2Constants.illegalVietCrystalMoves;
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
     public List<Integer> getFieldMoves() {
         // cut, fly, surf, strength, flash,
         // dig, teleport, whirlpool, waterfall,
@@ -2441,6 +2580,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     public List<Integer> getEarlyRequiredHMMoves() {
         // just cut
         return Gen2Constants.earlyRequiredHMMoves;
+    }
+
+    @Override
+    public boolean isRomValid() {
+        return romEntry.expectedCRC32 == actualCRC32;
     }
 
     @Override

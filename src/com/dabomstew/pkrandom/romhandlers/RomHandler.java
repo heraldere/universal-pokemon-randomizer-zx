@@ -48,7 +48,9 @@ public interface RomHandler {
         public abstract boolean isLoadable(String filename);
     }
 
-    // Basic load/save to filenames
+    // =======================
+    // Basic load/save methods
+    // =======================
 
     boolean loadRom(String filename);
 
@@ -58,7 +60,9 @@ public interface RomHandler {
 
     String loadedFilename();
 
+    // =============================================================
     // Methods relating to game updates for the 3DS and Switch games
+    // =============================================================
 
     boolean hasGameUpdateLoaded();
 
@@ -68,14 +72,22 @@ public interface RomHandler {
 
     String getGameUpdateVersion();
 
-    // Log stuff
+    // ===========
+    // Log methods
+    // ===========
 
     void setLog(PrintStream logStream);
 
     void printRomDiagnostics(PrintStream logStream);
 
-    // Get a List of Pokemon objects in this game.
-    // 0 = null 1-whatever = the Pokemon.
+    boolean isRomValid();
+
+    // ======================================================
+    // Methods for retrieving a list of Pokemon objects.
+    // Note that for many of these lists, index 0 is null.
+    // Instead, you use index on the species' National Dex ID
+    // ======================================================
+
     List<Pokemon> getPokemon();
 
     List<Pokemon> getPokemonInclFormes();
@@ -86,48 +98,66 @@ public interface RomHandler {
 
     Pokemon getAltFormeOfPokemon(Pokemon pk, int forme);
 
-    boolean hasFunctionalFormes();
+    List<Pokemon> getIrregularFormes();
 
-    // Setup Gen Restrictions.
+    // ==================================
+    // Methods to set up Gen Restrictions
+    // ==================================
+
     void setPokemonPool(Settings settings);
 
     void removeEvosForPokemonPool();
 
-    // Randomizer: Starters
-    // Get starters, they should be ordered with Pokemon
-    // following the one it is SE against.
-    // E.g. Grass, Fire, Water or Fire, Water, Grass etc.
+    // ===============
+    // Starter Pokemon
+    // ===============
+
     List<Pokemon> getStarters();
 
-    // Change the starter data in the ROM.
-    // Optionally also change the starter used by the rival in
-    // the level 5 battle, if there is one.
     boolean setStarters(List<Pokemon> newStarters);
-
-    // Tells whether this ROM has the ability to have starters changed.
-    // Was for before CUE's compressors were found and arm9 was untouchable.
-    boolean canChangeStarters();
 
     boolean hasStarterAltFormes();
 
     int starterCount();
 
-    // Randomizer: Pokemon stats
+    void customStarters(Settings settings);
+
+    void randomizeStarters(Settings settings);
+
+    void randomizeBasicTwoEvosStarters(Settings settings);
+
+    List<Pokemon> getPickedStarters();
+
+    List<Integer> getStarterHeldItems();
+
+    void setStarterHeldItems(List<Integer> items);
+
+    void randomizeStarterHeldItems(Settings settings);
+
+    // =======================
+    // Pokemon Base Statistics
+    // =======================
 
     // Run the stats shuffler on each Pokemon.
     void shufflePokemonStats(Settings settings);
 
-    // Randomise stats following evolutions for proportions or not (see
+    // Randomize stats following evolutions for proportions or not (see
     // tooltips)
     void randomizePokemonStats(Settings settings);
 
     // Randomize stats following a log_normal distribution (see implementation in AbstractRomHandler)
     void randomizePokemonStats_Log(Settings settings);
 
-    // Update base stats to gen6
+    // Update base stats to specified generation
     void updatePokemonStats(Settings settings);
 
     Map<Integer,StatChange> getUpdatedPokemonStats(int generation);
+
+    void standardizeEXPCurves(Settings settings);
+
+    // ====================================
+    // Methods for selecting random Pokemon
+    // ====================================
 
     // Give a random Pokemon who's in this game
     Pokemon randomPokemon();
@@ -146,20 +176,24 @@ public interface RomHandler {
     // Should make a good starter Pokemon
     Pokemon random2EvosPokemon(boolean allowAltFormes);
 
-    // Randomizer: types
+    // =============
+    // Pokemon Types
+    // =============
 
     // return a random type valid in this game.
-    // straightforward except for gen1 where dark&steel are excluded.
     Type randomType();
 
     boolean typeInGame(Type type);
 
-    // randomise Pokemon types, with a switch on whether evolutions
+    // randomize Pokemon types, with a switch on whether evolutions
     // should follow the same types or not.
     // some evolutions dont anyway, e.g. Eeveelutions, Hitmons
     void randomizePokemonTypes(Settings settings);
 
-    // Randomizer: pokemon abilities
+    // =================
+    // Pokemon Abilities
+    // =================
+
     int abilitiesPerPokemon();
 
     int highestAbilityIndex();
@@ -176,7 +210,10 @@ public interface RomHandler {
 
     boolean hasMegaEvolutions();
 
-    // Randomizer: wild pokemon
+    // ============
+    // Wild Pokemon
+    // ============
+
     List<EncounterSet> getEncounters(boolean useTimeOfDay);
 
     void setEncounters(boolean useTimeOfDay, List<EncounterSet> encounters);
@@ -195,20 +232,27 @@ public interface RomHandler {
 
     List<Pokemon> bannedForWildEncounters();
 
-    // Randomizer: trainer pokemon
+    void randomizeWildHeldItems(Settings settings);
+
+    void changeCatchRates(Settings settings);
+
+    void minimumCatchRate(int rateNonLegendary, int rateLegendary);
+
+    // ===============
+    // Trainer Pokemon
+    // ===============
+
     List<Trainer> getTrainers();
 
     List<Integer> getMainPlaythroughTrainers();
-    
-    List<Integer> getEvolutionItems();
+
+    List<Integer> getEliteFourTrainers(boolean isChallengeMode);
 
     void setTrainers(List<Trainer> trainerData, boolean doubleBattleMode);
 
     void randomizeTrainerPokes(Settings settings);
 
     void bossAcePokemon(Settings settings);
-
-    void typeThemeTrainerPokes(Settings settings);
 
     void randomizeTrainerHeldItems(Settings settings);
 
@@ -220,6 +264,8 @@ public interface RomHandler {
 
     void rivalCarriesStarter();
 
+    boolean hasRivalFinalBattle();
+
     void forceFullyEvolvedTrainerPokes(Settings settings);
 
     void onlyChangeTrainerLevels(Settings settings);
@@ -228,7 +274,9 @@ public interface RomHandler {
 
     void doubleBattleMode();
 
-    // Randomizer: moves
+    // =========
+    // Move Data
+    // =========
 
     void randomizeMovePowers();
 
@@ -252,13 +300,23 @@ public interface RomHandler {
     // return all the moves valid in this game.
     List<Move> getMoves();
 
+    // ================
+    // Pokemon Movesets
+    // ================
+
     Map<Integer, List<MoveLearnt>> getMovesLearnt();
 
     void setMovesLearnt(Map<Integer, List<MoveLearnt>> movesets);
 
     List<Integer> getMovesBannedFromLevelup();
 
+    Map<Integer, List<Integer>> getEggMoves();
+
+    void setEggMoves(Map<Integer, List<Integer>> eggMoves);
+
     void randomizeMovesLearnt(Settings settings);
+
+    void randomizeEggMoves(Settings settings);
 
     void orderDamagingMovesByDamage();
 
@@ -266,15 +324,9 @@ public interface RomHandler {
 
     boolean supportsFourStartingMoves();
 
-    void customStarters(Settings settings);
-
-    void randomizeStarters(Settings settings);
-
-    void randomizeBasicTwoEvosStarters(Settings settings);
-
-    List<Pokemon> getPickedStarters();
-
-    // Randomizer: static pokemon (except starters)
+    // ==============
+    // Static Pokemon
+    // ==============
 
     List<StaticEncounter> getStaticPokemon();
 
@@ -302,7 +354,9 @@ public interface RomHandler {
 
     boolean hasStaticMusicFix();
 
-    // Randomizer: Totem Pokemon
+    // =============
+    // Totem Pokemon
+    // =============
 
     List<TotemPokemon> getTotemPokemon();
 
@@ -310,7 +364,9 @@ public interface RomHandler {
 
     void randomizeTotemPokemon(Settings settings);
 
-    // Randomizer: TMs/HMs
+    // =========
+    // TMs & HMs
+    // =========
 
     List<Integer> getTMMoves();
 
@@ -342,17 +398,15 @@ public interface RomHandler {
 
     void fullTMHMCompatibility();
 
-    // tm/moveset sanity
-
     void ensureTMCompatSanity();
 
     void ensureTMEvolutionSanity();
 
-    // new 170: full HM (but not TM) compat override
-
     void fullHMCompatibility();
 
-    // Randomizer: move tutors
+    // ===========
+    // Move Tutors
+    // ===========
 
     void copyTMCompatibilityToCosmeticFormes();
 
@@ -372,13 +426,13 @@ public interface RomHandler {
 
     void fullMoveTutorCompatibility();
 
-    // mt/moveset sanity
-
     void ensureMoveTutorCompatSanity();
 
     void ensureMoveTutorEvolutionSanity();
 
-    // Randomizer: trainer names
+    // =============
+    // Trainer Names
+    // =============
 
     void copyMoveTutorCompatibilityToCosmeticFormes();
 
@@ -406,7 +460,9 @@ public interface RomHandler {
 
     void randomizeTrainerNames(Settings settings);
 
-    // Randomizer: trainer class names
+    // ===============
+    // Trainer Classes
+    // ===============
 
     List<String> getTrainerClassNames();
 
@@ -420,11 +476,17 @@ public interface RomHandler {
 
     List<Integer> getDoublesTrainerClasses();
 
+    // =====
     // Items
+    // =====
 
     ItemList getAllowedItems();
 
     ItemList getNonBadItems();
+
+    List<Integer> getEvolutionItems();
+
+    List<Integer> getXItems();
 
     List<Integer> getUniqueNoSellItems();
 
@@ -432,19 +494,11 @@ public interface RomHandler {
 
     List<Integer> getOPShopItems();
 
-    void randomizeWildHeldItems(Settings settings);
-
     String[] getItemNames();
-    
-    String[] getShopNames();
 
-    List<Integer> getStarterHeldItems();
-
-    void setStarterHeldItems(List<Integer> items);
-
-    void randomizeStarterHeldItems(Settings settings);
-
+    // ===========
     // Field Items
+    // ===========
 
     // TMs on the field
 
@@ -466,7 +520,35 @@ public interface RomHandler {
 
     void randomizeFieldItems(Settings settings);
 
-    // Trades
+    // ============
+    // Special Shops
+    // =============
+
+    boolean hasShopRandomization();
+
+    void shuffleShopItems();
+
+    void randomizeShopItems(Settings settings);
+
+    Map<Integer, Shop> getShopItems();
+
+    void setShopItems(Map<Integer, Shop> shopItems);
+
+    void setShopPrices();
+
+    // ============
+    // Pickup Items
+    // ============
+
+    List<PickupItem> getPickupItems();
+
+    void setPickupItems(List<PickupItem> pickupItems);
+
+    void randomizePickupItems(Settings settings);
+
+    // ==============
+    // In-Game Trades
+    // ==============
 
     List<IngameTrade> getIngameTrades();
 
@@ -480,7 +562,9 @@ public interface RomHandler {
 
     int maxTradeOTNameLength();
 
-    // Evos
+    // ==================
+    // Pokemon Evolutions
+    // ==================
 
     void removeImpossibleEvolutions(Settings settings);
 
@@ -498,30 +582,20 @@ public interface RomHandler {
 
     void randomizeEvolutions(Settings settings);
 
-    void changeCatchRates(Settings settings);
+    void randomizeEvolutionsEveryLevel(Settings settings);
 
-    boolean hasShopRandomization();
+    // In the earlier games, alt formes use the same evolutions as the base forme.
+    // In later games, this was changed so that alt formes can have unique evolutions
+    // compared to the base forme.
+    boolean altFormesCanHaveDifferentEvolutions();
 
-    void shuffleShopItems();
-
-    void randomizeShopItems(Settings settings);
-
-    Map<Integer, List<Integer>> getShopItems();
-
-    void setShopItems(Map<Integer, List<Integer>> shopItems);
-
-    void setShopPrices();
-
-    List<Integer> getMainGameShops();
-
-    // stats stuff
-    void minimumCatchRate(int rateNonLegendary, int rateLegendary);
-
-    void standardizeEXPCurves(Settings settings);
-
+    // ==================================
     // (Mostly) unchanging lists of moves
+    // ==================================
 
     List<Integer> getGameBreakingMoves();
+
+    List<Integer> getIllegalMoves();
 
     // includes game or gen-specific moves like Secret Power
     // but NOT healing moves (Softboiled, Milk Drink)
@@ -531,7 +605,10 @@ public interface RomHandler {
     // (excluding Gameshark codes or early drink in RBY)
     List<Integer> getEarlyRequiredHMMoves();
 
+
+    // ====
     // Misc
+    // ====
 
     boolean isYellow();
 
@@ -549,13 +626,13 @@ public interface RomHandler {
 
     BufferedImage getMascotImage();
 
-    boolean isROMHack();
-
     int generationOfPokemon();
 
     void writeCheckValueToROM(int value);
 
+    // ===========
     // code tweaks
+    // ===========
 
     int miscTweaksAvailable();
 
@@ -564,6 +641,12 @@ public interface RomHandler {
     void applyMiscTweak(MiscTweak tweak);
 
     void renderPlacementHistory();
+
+    // ==========================
+    // Misc forme-related methods
+    // ==========================
+
+    boolean hasFunctionalFormes();
 
     List<Pokemon> getAbilityDependentFormes();
 

@@ -40,11 +40,13 @@ public class Randomizer {
 
     private final Settings settings;
     private final RomHandler romHandler;
+    private final ResourceBundle bundle;
     private final boolean saveAsDirectory;
 
-    public Randomizer(Settings settings, RomHandler romHandler, boolean saveAsDirectory) {
+    public Randomizer(Settings settings, RomHandler romHandler, ResourceBundle bundle, boolean saveAsDirectory) {
         this.settings = settings;
         this.romHandler = romHandler;
+        this.bundle = bundle;
         this.saveAsDirectory = saveAsDirectory;
     }
 
@@ -149,6 +151,7 @@ public class Randomizer {
         // Update base stats to a future generation
         if (settings.isUpdateBaseStats()) {
             romHandler.updatePokemonStats(settings);
+            pokemonTraitsChanged = true;
         }
 
         // Standardize EXP curves
@@ -173,6 +176,9 @@ public class Randomizer {
 
         if (settings.getEvolutionsMod() == Settings.EvolutionsMod.RANDOM) {
             romHandler.randomizeEvolutions(settings);
+            evolutionsChanged = true;
+        } else if (settings.getEvolutionsMod() == Settings.EvolutionsMod.RANDOM_EVERY_LEVEL) {
+            romHandler.randomizeEvolutionsEveryLevel(settings);
             evolutionsChanged = true;
         }
 
@@ -253,30 +259,28 @@ public class Randomizer {
 
         // Starter Pokemon
         // Applied after type to update the strings correctly based on new types
-        if (romHandler.canChangeStarters()) {
-            switch(settings.getStartersMod()) {
-                case CUSTOM:
-                    romHandler.customStarters(settings);
-                    startersChanged = true;
-                    break;
-                case COMPLETELY_RANDOM:
-                    romHandler.randomizeStarters(settings);
-                    startersChanged = true;
-                    break;
-                case RANDOM_WITH_TWO_EVOLUTIONS:
-                    romHandler.randomizeBasicTwoEvosStarters(settings);
-                    startersChanged = true;
-                    break;
-                default:
-                    break;
-            }
-            if (settings.isRandomizeStartersHeldItems() && !(romHandler instanceof Gen1RomHandler)) {
-                romHandler.randomizeStarterHeldItems(settings);
-            }
+        switch(settings.getStartersMod()) {
+            case CUSTOM:
+                romHandler.customStarters(settings);
+                startersChanged = true;
+                break;
+            case COMPLETELY_RANDOM:
+                romHandler.randomizeStarters(settings);
+                startersChanged = true;
+                break;
+            case RANDOM_WITH_TWO_EVOLUTIONS:
+                romHandler.randomizeBasicTwoEvosStarters(settings);
+                startersChanged = true;
+                break;
+            default:
+                break;
+        }
+        if (settings.isRandomizeStartersHeldItems() && !(romHandler instanceof Gen1RomHandler)) {
+            romHandler.randomizeStarterHeldItems(settings);
+        }
 
-            if (startersChanged) {
-                logStarters(log);
-            }
+        if (startersChanged) {
+            logStarters(log);
         }
 
         // Move Data Log
@@ -295,6 +299,7 @@ public class Randomizer {
         if (settings.getMovesetsMod() != Settings.MovesetsMod.UNCHANGED &&
                 settings.getMovesetsMod() != Settings.MovesetsMod.METRONOME_ONLY) {
             romHandler.randomizeMovesLearnt(settings);
+            romHandler.randomizeEggMoves(settings);
             movesetsChanged = true;
         }
 
@@ -337,11 +342,9 @@ public class Randomizer {
             case RANDOM:
             case DISTRIBUTED:
             case MAINPLAYTHROUGH:
-                romHandler.randomizeTrainerPokes(settings);
-                trainersChanged = true;
-                break;
             case TYPE_THEMED:
-                romHandler.typeThemeTrainerPokes(settings);
+            case TYPE_THEMED_ELITE4_GYMS:
+                romHandler.randomizeTrainerPokes(settings);
                 trainersChanged = true;
                 break;
             default:
@@ -376,22 +379,28 @@ public class Randomizer {
             trainersChanged = true;
         }
 
-        if (trainersChanged) {
-            maybeLogTrainerChanges(log);
-        } else {
-            log.println("Trainers: Unchanged." + NEWLINE);
-        }
+        List<String> originalTrainerNames = getTrainerNames();
+        boolean trainerNamesChanged = false;
 
         // Trainer names & class names randomization
-        // done after trainer log for clarity
         if (romHandler.canChangeTrainerText()) {
             if (settings.isRandomizeTrainerClassNames()) {
                 romHandler.randomizeTrainerClassNames(settings);
+                trainersChanged = true;
+                trainerNamesChanged = true;
             }
 
             if (settings.isRandomizeTrainerNames()) {
                 romHandler.randomizeTrainerNames(settings);
+                trainersChanged = true;
+                trainerNamesChanged = true;
             }
+        }
+
+        if (trainersChanged) {
+            maybeLogTrainerChanges(log, originalTrainerNames, trainerNamesChanged);
+        } else {
+            log.println("Trainers: Unchanged." + NEWLINE);
         }
 
         // Apply metronome only mode now that trainers have been dealt with
@@ -649,6 +658,12 @@ public class Randomizer {
             logShops(log);
         }
 
+        // Pickup Items
+        if (settings.getPickupItemsMod() == Settings.PickupItemsMod.RANDOM) {
+            romHandler.randomizePickupItems(settings);
+            logPickupItems(log);
+        }
+
         // Test output for placement history
         // romHandler.renderPlacementHistory();
 
@@ -679,6 +694,9 @@ public class Randomizer {
 
         // Diagnostics
         log.println("--ROM Diagnostics--");
+        if (!romHandler.isRomValid()) {
+            log.println(bundle.getString("Log.InvalidRomLoaded"));
+        }
         romHandler.printRomDiagnostics(log);
 
         return checkValue;
@@ -729,11 +747,11 @@ public class Randomizer {
         log.println("--Pokemon Movesets--");
         List<String> movesets = new ArrayList<>();
         Map<Integer, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
+        Map<Integer, List<Integer>> eggMoves = romHandler.getEggMoves();
         List<Move> moves = romHandler.getMoves();
         List<Pokemon> pkmnList = romHandler.getPokemonInclFormes();
         int i = 1;
         for (Pokemon pkmn : pkmnList) {
-
             if (pkmn == null || pkmn.actuallyCosmetic) {
                 continue;
             }
@@ -772,6 +790,14 @@ public class Randomizer {
                     sb.append("invalid move at level").append(ml.level);
                 }
             }
+            List<Integer> eggMove = eggMoves.get(pkmn.number);
+            if (eggMove != null && eggMove.size() != 0) {
+                sb.append("Egg Moves:").append(System.getProperty("line.separator"));
+                for (Integer move : eggMove) {
+                    sb.append(" - ").append(moves.get(move).name).append(System.getProperty("line.separator"));
+                }
+            }
+
             movesets.add(sb.toString());
         }
         Collections.sort(movesets);
@@ -859,7 +885,7 @@ public class Randomizer {
         // Log base stats & types
         log.println("--Pokemon Base Stats & Types--");
         if (romHandler instanceof Gen1RomHandler) {
-            log.println("NUM|NAME         |TYPE             |  HP| ATK| DEF| SPE|SPEC");
+            log.println("NUM|NAME      |TYPE             |  HP| ATK| DEF| SPE|SPEC");
             for (Pokemon pkmn : allPokes) {
                 if (pkmn != null) {
                     String typeString = pkmn.primaryType == null ? "???" : pkmn.primaryType.toString();
@@ -867,7 +893,7 @@ public class Randomizer {
                         typeString += "/" + pkmn.secondaryType.toString();
                     }
                     log.printf("%3d|%-10s|%-17s|%4d|%4d|%4d|%4d|%4d" + NEWLINE, pkmn.number, pkmn.fullName(), typeString,
-                            pkmn.hp, pkmn.attack, pkmn.defense, pkmn.speed, pkmn.spatk, pkmn.spdef );
+                            pkmn.hp, pkmn.attack, pkmn.defense, pkmn.speed, pkmn.special );
                 }
 
             }
@@ -983,17 +1009,20 @@ public class Randomizer {
             log.printf("%3d " + nameSpFormat, pkmn.number, pkmn.fullName() + " ");
 
             for (int i = 1; i < flags.length; i++) {
-
-                int moveNameLength = moveData.get(moveList.get(i - 1)).name.length();
+                String moveName = moveData.get(moveList.get(i - 1)).name;
+                if (moveName.length() == 0) {
+                    moveName = "(BLANK)";
+                }
+                int moveNameLength = moveName.length();
                 if (flags[i]) {
                     if (includeTMNumber) {
                         if (i <= tmCount) {
-                            log.printf("|TM%02d %" + moveNameLength + "s ", i, moveData.get(moveList.get(i - 1)).name);
+                            log.printf("|TM%02d %" + moveNameLength + "s ", i, moveName);
                         } else {
-                            log.printf("|HM%02d %" + moveNameLength + "s ", i-tmCount, moveData.get(moveList.get(i - 1)).name);
+                            log.printf("|HM%02d %" + moveNameLength + "s ", i-tmCount, moveName);
                         }
                     } else {
-                        log.printf("|%" + moveNameLength + "s ", moveData.get(moveList.get(i - 1)).name);
+                        log.printf("|%" + moveNameLength + "s ", moveName);
                     }
                 } else {
                     if (includeTMNumber) {
@@ -1061,8 +1090,6 @@ public class Randomizer {
             log.print("(rate=" + es.rate + ")");
             log.println();
             for (Encounter e : es.encounters) {
-
-            // sb.append(String.format("%03d %s", pkmn.number, pkmn.fullName())).append(System.getProperty("line.separator")).append(String.format("HP %d ATK %-3d DEF %-3d SPATK %-3d SPDEF %-3d SPD %-3d", pkmn.hp, pkmn.attack, pkmn.defense, pkmn.speed, pkmn.spatk, pkmn.spdef)).append(System.getProperty("line.separator"));
                 StringBuilder sb = new StringBuilder();
                 if (e.isSOS) {
                     String stringToAppend;
@@ -1091,7 +1118,11 @@ public class Randomizer {
                 String whitespaceFormat = romHandler.generationOfPokemon() == 7 ? "%-31s" : "%-25s";
                 log.print(String.format(whitespaceFormat, sb));
                 StringBuilder sb2 = new StringBuilder();
-                sb2.append(String.format("HP %-3d ATK %-3d DEF %-3d SPATK %-3d SPDEF %-3d SPEED %-3d", e.pokemon.hp, e.pokemon.attack, e.pokemon.defense, e.pokemon.spatk, e.pokemon.spdef, e.pokemon.speed));
+                if (romHandler instanceof Gen1RomHandler) {
+                    sb2.append(String.format("HP %-3d ATK %-3d DEF %-3d SPECIAL %-3d SPEED %-3d", e.pokemon.hp, e.pokemon.attack, e.pokemon.defense, e.pokemon.special, e.pokemon.speed));
+                } else {
+                    sb2.append(String.format("HP %-3d ATK %-3d DEF %-3d SPATK %-3d SPDEF %-3d SPEED %-3d", e.pokemon.hp, e.pokemon.attack, e.pokemon.defense, e.pokemon.spatk, e.pokemon.spdef, e.pokemon.speed));
+                }
                 log.print(sb2);
                 log.println();
             }
@@ -1100,7 +1131,7 @@ public class Randomizer {
         log.println();
     }
 
-    private void maybeLogTrainerChanges(final PrintStream log) {
+    private void maybeLogTrainerChanges(final PrintStream log, List<String> originalTrainerNames, boolean trainerNamesChanged) {
 
         log.println("--Trainers Pokemon--");
         List<Trainer> trainers = romHandler.getTrainers();
@@ -1108,10 +1139,19 @@ public class Randomizer {
         for (Trainer t : trainers) {
             idx++;
             log.print("#" + idx + " ");
+            String originalTrainerName = originalTrainerNames.get(idx);
+            String currentTrainerName = "";
             if (t.fullDisplayName != null) {
-                log.print("(" + t.fullDisplayName + ")");
+                currentTrainerName = t.fullDisplayName;
             } else if (t.name != null) {
-                log.print("(" + t.name + ")");
+                currentTrainerName = t.name;
+            }
+            if (!currentTrainerName.isEmpty()) {
+                if (trainerNamesChanged) {
+                    log.printf("(%s => %s)", originalTrainerName, currentTrainerName);
+                } else {
+                    log.printf("(%s)", currentTrainerName);
+                }
             }
             if (t.offset != idx && t.offset != 0) {
                 log.printf("@%X", t.offset);
@@ -1199,14 +1239,14 @@ public class Randomizer {
     }
 
     private void logShops(final PrintStream log) {
-        String[] shopNames = romHandler.getShopNames();
         String[] itemNames = romHandler.getItemNames();
         log.println("--Shops--");
-        Map<Integer, List<Integer>> shopsDict = romHandler.getShopItems();
+        Map<Integer, Shop> shopsDict = romHandler.getShopItems();
         for (int shopID : shopsDict.keySet()) {
-            log.printf("%s", shopNames[shopID]);
+            Shop shop = shopsDict.get(shopID);
+            log.printf("%s", shop.name);
             log.println();
-            List<Integer> shopItems = shopsDict.get(shopID);
+            List<Integer> shopItems = shop.items;
             for (int shopItemID : shopItems) {
                 log.printf("- %5s", itemNames[shopItemID]);
                 log.println();
@@ -1215,6 +1255,54 @@ public class Randomizer {
             log.println();
         }
         log.println();
+    }
+
+    private void logPickupItems(final PrintStream log) {
+        List<PickupItem> pickupItems = romHandler.getPickupItems();
+        String[] itemNames = romHandler.getItemNames();
+        log.println("--Pickup Items--");
+        for (int levelRange = 0; levelRange < 10; levelRange++) {
+            int startingLevel = (levelRange * 10) + 1;
+            int endingLevel = (levelRange + 1) * 10;
+            log.printf("Level %s-%s", startingLevel, endingLevel);
+            log.println();
+            TreeMap<Integer, List<String>> itemListPerProbability = new TreeMap<>();
+            for (PickupItem pickupItem : pickupItems) {
+                int probability = pickupItem.probabilities[levelRange];
+                if (itemListPerProbability.containsKey(probability)) {
+                    itemListPerProbability.get(probability).add(itemNames[pickupItem.item]);
+                } else if (probability > 0) {
+                    List<String> itemList = new ArrayList<>();
+                    itemList.add(itemNames[pickupItem.item]);
+                    itemListPerProbability.put(probability, itemList);
+                }
+            }
+            for (Map.Entry<Integer, List<String>> itemListPerProbabilityEntry : itemListPerProbability.descendingMap().entrySet()) {
+                int probability = itemListPerProbabilityEntry.getKey();
+                List<String> itemList = itemListPerProbabilityEntry.getValue();
+                String itemsString = String.join(", ", itemList);
+                log.printf("%d%%: %s", probability, itemsString);
+                log.println();
+            }
+            log.println();
+        }
+        log.println();
+    }
+
+    private List<String> getTrainerNames() {
+        List<String> trainerNames = new ArrayList<>();
+        trainerNames.add(""); // for index 0
+        List<Trainer> trainers = romHandler.getTrainers();
+        for (Trainer t : trainers) {
+            if (t.fullDisplayName != null) {
+                trainerNames.add(t.fullDisplayName);
+            } else if (t.name != null) {
+                trainerNames.add(t.name);
+            } else {
+                trainerNames.add("");
+            }
+        }
+        return trainerNames;
     }
 
     

@@ -71,7 +71,7 @@ public class Pokemon implements Comparable<Pokemon> {
     public List<MegaEvolution> megaEvolutionsFrom = new ArrayList<>();
     public List<MegaEvolution> megaEvolutionsTo = new ArrayList<>();
 
-    private List<Integer> shuffledStatsOrder;
+    protected List<Integer> shuffledStatsOrder;
 
     // A flag to use for things like recursive stats copying.
     // Must not rely on the state of this flag being preserved between calls.
@@ -100,7 +100,7 @@ public class Pokemon implements Comparable<Pokemon> {
         applyShuffledOrderToStats();
     }
 
-    private void applyShuffledOrderToStats() {
+    protected void applyShuffledOrderToStats() {
         List<Integer> stats = Arrays.asList(hp, attack, defense, spatk, spdef, speed);
 
         // Copy in new stats
@@ -110,9 +110,6 @@ public class Pokemon implements Comparable<Pokemon> {
         spatk = stats.get(shuffledStatsOrder.get(3));
         spdef = stats.get(shuffledStatsOrder.get(4));
         speed = stats.get(shuffledStatsOrder.get(5));
-
-        // make special the average of spatk and spdef
-        special = (int) Math.ceil((spatk + spdef) / 2.0f);
     }
 
     public void randomizeStatsWithinBST(Random random) {
@@ -132,10 +129,6 @@ public class Pokemon implements Comparable<Pokemon> {
             spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + 10;
             spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + 10;
             speed = (int) Math.max(1, Math.round(speW / totW * bst)) + 10;
-
-            // Fix up special too
-            special = (int) Math.ceil((spatk + spdef) / 2.0f);
-
         } else {
             // Minimum 20 HP, 10 everything else
             int bst = bst() - 70;
@@ -152,9 +145,6 @@ public class Pokemon implements Comparable<Pokemon> {
             spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + 10;
             spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + 10;
             speed = (int) Math.max(1, Math.round(speW / totW * bst)) + 10;
-
-            // Fix up special too
-            special = (int) Math.ceil((spatk + spdef) / 2.0f);
         }
 
         // Check for something we can't store
@@ -325,8 +315,34 @@ public class Pokemon implements Comparable<Pokemon> {
         speed = (int) Math.min(255, Math.max(1, Math.round(evolvesFrom.speed * bstRatio)));
         spatk = (int) Math.min(255, Math.max(1, Math.round(evolvesFrom.spatk * bstRatio)));
         spdef = (int) Math.min(255, Math.max(1, Math.round(evolvesFrom.spdef * bstRatio)));
+    }
 
-        special = (int) Math.ceil((spatk + spdef) / 2.0f);
+    public void assignNewStatsForEvolution(Pokemon evolvesFrom, Random random) {
+
+        double ourBST = bst();
+        double theirBST = evolvesFrom.bst();
+
+        double bstDiff = ourBST - theirBST;
+
+        // Make weightings
+        double hpW = random.nextDouble(), atkW = random.nextDouble(), defW = random.nextDouble();
+        double spaW = random.nextDouble(), spdW = random.nextDouble(), speW = random.nextDouble();
+
+        double totW = hpW + atkW + defW + spaW + spdW + speW;
+
+        double hpDiff = Math.round((hpW / totW) * bstDiff);
+        double atkDiff = Math.round((atkW / totW) * bstDiff);
+        double defDiff = Math.round((defW / totW) * bstDiff);
+        double spaDiff = Math.round((spaW / totW) * bstDiff);
+        double spdDiff = Math.round((spdW / totW) * bstDiff);
+        double speDiff = Math.round((speW / totW) * bstDiff);
+
+        hp = (int) Math.min(255, Math.max(1, evolvesFrom.hp + hpDiff));
+        attack = (int) Math.min(255, Math.max(1, evolvesFrom.attack + atkDiff));
+        defense = (int) Math.min(255, Math.max(1, evolvesFrom.defense + defDiff));
+        speed = (int) Math.min(255, Math.max(1, evolvesFrom.speed + speDiff));
+        spatk = (int) Math.min(255, Math.max(1, evolvesFrom.spatk + spaDiff));
+        spdef = (int) Math.min(255, Math.max(1, evolvesFrom.spdef + spdDiff));
     }
 
     public int bst() {
@@ -340,6 +356,18 @@ public class Pokemon implements Comparable<Pokemon> {
         } else {
             return hp + attack + defense + spatk + spdef + speed;
         }
+    }
+
+    public double getAttackSpecialAttackRatio() {
+        return (double)attack / ((double)attack + (double)spatk);
+    }
+
+    public int getBaseNumber() {
+        Pokemon base = this;
+        while (base.baseForme != null) {
+            base = base.baseForme;
+        }
+        return base.number;
     }
 
     public int getEvFromDepth() {
@@ -391,12 +419,6 @@ public class Pokemon implements Comparable<Pokemon> {
         return "Pokemon [name=" + name + formeSuffix + ", number=" + number + ", primaryType=" + primaryType
                 + ", secondaryType=" + secondaryType + ", hp=" + hp + ", attack=" + attack + ", defense=" + defense
                 + ", spatk=" + spatk + ", spdef=" + spdef + ", speed=" + speed + "]";
-    }
-
-    public String toStringRBY() {
-        return "Pokemon [name=" + name + ", number=" + number + ", primaryType=" + primaryType + ", secondaryType="
-                + secondaryType + ", hp=" + hp + ", attack=" + attack + ", defense=" + defense + ", special=" + special
-                + ", speed=" + speed + "]";
     }
 
     @Override

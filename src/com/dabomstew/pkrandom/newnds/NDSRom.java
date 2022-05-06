@@ -1,8 +1,9 @@
 package com.dabomstew.pkrandom.newnds;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.zip.CRC32;
 
 import com.dabomstew.pkrandom.SysConstants;
 import com.dabomstew.pkrandom.FileFunctions;
@@ -35,6 +36,7 @@ import cuecompressors.BLZCoder;
 public class NDSRom {
 
     private String romCode;
+    private byte version;
     private String romFilename;
     private RandomAccessFile baseRom;
     private boolean romOpen;
@@ -103,6 +105,9 @@ public class NDSRom {
         byte[] sig = new byte[4];
         baseRom.readFully(sig);
         this.romCode = new String(sig, "US-ASCII");
+
+        baseRom.seek(0x1E);
+        this.version = baseRom.readByte();
 
         baseRom.seek(0x28);
         this.arm9_ramoffset = readFromFile(baseRom, 4);
@@ -444,6 +449,10 @@ public class NDSRom {
         return this.romCode;
     }
 
+    public byte getVersion() {
+        return this.version;
+    }
+
     // returns null if file doesn't exist
     public byte[] getFile(String filename) throws IOException {
         if (files.containsKey(filename)) {
@@ -478,9 +487,7 @@ public class NDSRom {
             byte[] arm9 = new byte[arm9_size];
             this.baseRom.seek(arm9_offset);
             this.baseRom.readFully(arm9);
-            CRC32 checksum = new CRC32();
-            checksum.update(arm9);
-            originalArm9CRC = checksum.getValue();
+            originalArm9CRC = FileFunctions.getCRC32(arm9);
             // footer check
             int nitrocode = readFromFile(this.baseRom, 4);
             if (nitrocode == 0xDEC00621) {
@@ -633,6 +640,8 @@ public class NDSRom {
         }
         Collections.sort(overlayList);
         Collections.sort(fileList);
+        Path p = Paths.get(this.romFilename);
+        logStream.println("File name: " + p.getFileName().toString());
         logStream.println("arm9: " + String.format("%08X", originalArm9CRC));
         for (String overlayLog : overlayList) {
             logStream.println(overlayLog);
@@ -641,8 +650,6 @@ public class NDSRom {
             logStream.println(fileLog);
         }
     }
-
-    // Helper methods to get variable-size ints out of files
 
     public String getTmpFolder() {
         return tmpFolder;

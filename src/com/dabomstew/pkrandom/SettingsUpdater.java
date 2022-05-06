@@ -170,7 +170,7 @@ public class SettingsUpdater {
             insertExtraByte(22, (byte) 1);
 
             // Move some bits from general options to misc tweaks
-            int oldTweaks = FileFunctions.readFullInt(dataBlock, 27);
+            int oldTweaks = FileFunctions.readFullIntBigEndian(dataBlock, 27);
             if ((dataBlock[0] & 1) != 0) {
                 oldTweaks |= MiscTweak.LOWER_CASE_POKEMON_NAMES.getValue();
             }
@@ -181,9 +181,9 @@ public class SettingsUpdater {
                 oldTweaks |= MiscTweak.UPDATE_TYPE_EFFECTIVENESS.getValue();
             }
             if ((dataBlock[2] & (1 << 5)) != 0) {
-                oldTweaks |= MiscTweak.UNUSED1.getValue();
+                oldTweaks |= MiscTweak.FORCE_CHALLENGE_MODE.getValue();
             }
-            FileFunctions.writeFullInt(dataBlock, 27, oldTweaks);
+            FileFunctions.writeFullIntBigEndian(dataBlock, 27, oldTweaks);
 
             // Now remap the affected bytes
             dataBlock[0] = getRemappedByte(dataBlock[0], new int[] { 2, 3, 4, 6, 7 });
@@ -234,7 +234,6 @@ public class SettingsUpdater {
         }
 
         if (oldVersion < 300) {
-
             // wild level modifier
             insertExtraByte(38, (byte) 50);
 
@@ -243,7 +242,6 @@ public class SettingsUpdater {
         }
 
         if (oldVersion < 311) {
-
             // double battle mode + boss/important extra pokemon
             insertExtraByte(40, (byte) 0);
 
@@ -264,7 +262,6 @@ public class SettingsUpdater {
         }
 
         if (oldVersion < 314) {
-
             // exp curve
             insertExtraByte(46, (byte) 0);
 
@@ -273,15 +270,25 @@ public class SettingsUpdater {
         }
 
         if (oldVersion < 315) {
+            // This tweak used to be "Randomize Hidden Hollows", which got moved to static Pokemon
+            // randomization, so the misc tweak became unused in this version. It eventually *was*
+            // used in a future version for something else, but don't get confused by the new name.
+            int oldTweaks = FileFunctions.readFullIntBigEndian(dataBlock, 32);
+            oldTweaks &= ~MiscTweak.FORCE_CHALLENGE_MODE.getValue();
+            FileFunctions.writeFullIntBigEndian(dataBlock, 32, oldTweaks);
 
-            int oldTweaks = FileFunctions.readFullInt(dataBlock, 32);
-
-            oldTweaks &= ~MiscTweak.UNUSED1.getValue();
-
-            FileFunctions.writeFullInt(dataBlock, 32, oldTweaks);
-
+            // Trainer Pokemon held items
             insertExtraByte(48, (byte) 0);
+        }
 
+        if (oldVersion < 317) {
+            // Pickup items
+            insertExtraByte(49, (byte) 0);
+
+            // Clear "assoc" state from GenRestrictions as it doesn't exist any longer
+            int genRestrictions = FileFunctions.readFullIntBigEndian(dataBlock, 28);
+            genRestrictions &= 127;
+            FileFunctions.writeFullIntBigEndian(dataBlock, 28, genRestrictions);
         }
 
         // fix checksum

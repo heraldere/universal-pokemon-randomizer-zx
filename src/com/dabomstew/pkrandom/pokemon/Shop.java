@@ -1,7 +1,7 @@
 package com.dabomstew.pkrandom.pokemon;
 
 /*----------------------------------------------------------------------------*/
-/*--  Move.java - represents a move usable by Pokemon.                      --*/
+/*--  Shop.java - represents a shop with a list of purchasable items.       --*/
 /*--                                                                        --*/
 /*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
 /*--  Originally part of "Universal Pokemon Randomizer" by Dabomstew        --*/
@@ -24,23 +24,20 @@ package com.dabomstew.pkrandom.pokemon;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
-public class Move {
+import java.util.List;
 
+public class Shop {
+    public List<Integer> items;
     public String name;
-    public int number;
-    public int internalId;
-    public int power;
-    public int pp;
-    public double hitratio;
-    public Type type;
-    public int effectIndex;
-    public MoveCategory category;
-    public double hitCount = 1; // not saved, only used in randomized move powers.
-    public int priority;
+    public boolean isMainGame;
 
-    public String toString() {
-        return "#" + number + " " + name + " - Power: " + power + ", Base PP: " + pp + ", Type: " + type + ", Hit%: "
-                + (hitratio) + ", Effect: " + effectIndex + ", Priority: " + priority;
+    public Shop() {
+        this.isMainGame = false;
     }
 
+    public Shop(Shop otherShop) {
+        this.items = otherShop.items;
+        this.name = otherShop.name;
+        this.isMainGame = otherShop.isMainGame;
+    }
 }

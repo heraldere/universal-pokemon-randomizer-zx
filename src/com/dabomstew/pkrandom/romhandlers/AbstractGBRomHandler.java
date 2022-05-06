@@ -30,8 +30,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Random;
-import java.util.zip.CRC32;
 
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
@@ -108,9 +109,9 @@ public abstract class AbstractGBRomHandler extends AbstractRomHandler {
 
     @Override
     public void printRomDiagnostics(PrintStream logStream) {
-        CRC32 checksum = new CRC32();
-        checksum.update(originalRom);
-        long crc = checksum.getValue();
+        Path p = Paths.get(loadedFN);
+        logStream.println("File name: " + p.getFileName().toString());
+        long crc = FileFunctions.getCRC32(originalRom);
         logStream.println("Original ROM CRC32: " + String.format("%08X", crc));
     }
 

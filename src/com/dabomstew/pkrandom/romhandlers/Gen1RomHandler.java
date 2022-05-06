@@ -115,6 +115,7 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         private int version, nonJapanese;
         private String extraTableFile;
         private boolean isYellow;
+        private long expectedCRC32 = -1;
         private int crcInHeader = -1;
         private Map<String, String> tweakFiles = new HashMap<>();
         private List<TMTextEntry> tmTexts = new ArrayList<>();
@@ -137,14 +138,6 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
 
     static {
         loadROMInfo();
-    }
-
-    private static class GameCornerPokemon {
-        private int[] offsets;
-
-        public String toString() {
-            return Arrays.toString(offsets);
-        }
     }
 
     private static class TMTextEntry {
@@ -208,6 +201,8 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
                             current.extraTableFile = r[1];
                         } else if (r[0].equals("CRCInHeader")) {
                             current.crcInHeader = parseRIInt(r[1]);
+                        } else if (r[0].equals("CRC32")) {
+                            current.expectedCRC32 = parseRILong("0x" + r[1]);
                         } else if (r[0].endsWith("Tweak")) {
                             current.tweakFiles.put(r[0], r[1]);
                         } else if (r[0].equals("ExtraTypes")) {
@@ -311,6 +306,21 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         }
     }
 
+    private static long parseRILong(String off) {
+        int radix = 10;
+        off = off.trim().toLowerCase();
+        if (off.startsWith("0x") || off.startsWith("&h")) {
+            radix = 16;
+            off = off.substring(2);
+        }
+        try {
+            return Long.parseLong(off, radix);
+        } catch (NumberFormatException ex) {
+            System.err.println("invalid base " + radix + "number " + off);
+            return 0;
+        }
+    }
+
     // This ROM's data
     private Pokemon[] pokes;
     private List<Pokemon> pokemonList;
@@ -320,6 +330,7 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     private String[] mapNames;
     private SubMap[] maps;
     private boolean xAccNerfed;
+    private long actualCRC32;
 
     @Override
     public boolean detectRom(byte[] rom) {
@@ -341,7 +352,7 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         maps = new SubMap[256];
         xAccNerfed = false;
         clearTextTables();
-        readTextTable("gameboy_jap");
+        readTextTable("gameboy_jpn");
         if (romEntry.extraTableFile != null && !romEntry.extraTableFile.equalsIgnoreCase("none")) {
             readTextTable(romEntry.extraTableFile);
         }
@@ -352,6 +363,7 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         loadItemNames();
         preloadMaps();
         loadMapNames();
+        actualCRC32 = FileFunctions.getCRC32(rom);
     }
 
     private void loadPokedexOrder() {
@@ -479,13 +491,13 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     }
 
     private void loadPokemonStats() {
-        pokes = new Pokemon[pokedexCount + 1];
+        pokes = new Gen1Pokemon[pokedexCount + 1];
         // Fetch our names
         String[] pokeNames = readPokemonNames();
         // Get base stats
         int pokeStatsOffset = romEntry.getValue("PokemonStatsOffset");
         for (int i = 1; i <= pokedexCount; i++) {
-            pokes[i] = new Pokemon();
+            pokes[i] = new Gen1Pokemon();
             pokes[i].number = i;
             if (i != Species.mew || romEntry.isYellow) {
                 loadBasicPokeStats(pokes[i], pokeStatsOffset + (i - 1) * Gen1Constants.baseStatsEntrySize);
@@ -536,8 +548,6 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         pkmn.defense = rom[offset + Gen1Constants.bsDefenseOffset] & 0xFF;
         pkmn.speed = rom[offset + Gen1Constants.bsSpeedOffset] & 0xFF;
         pkmn.special = rom[offset + Gen1Constants.bsSpecialOffset] & 0xFF;
-        pkmn.spatk = pkmn.special;
-        pkmn.spdef = pkmn.special;
         // Type
         pkmn.primaryType = idToType(rom[offset + Gen1Constants.bsPrimaryTypeOffset] & 0xFF);
         pkmn.secondaryType = idToType(rom[offset + Gen1Constants.bsSecondaryTypeOffset] & 0xFF);
@@ -764,14 +774,9 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public String[] getShopNames() {
-        return null;
-    }
-    @Override
     public List<Integer> getEvolutionItems() {
         return null;
     }
-    
 
     @Override
     public List<EncounterSet> getEncounters(boolean useTimeOfDay) {
@@ -1019,6 +1024,11 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public List<Pokemon> getIrregularFormes() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public boolean hasFunctionalFormes() {
         return false;
     }
@@ -1087,6 +1097,11 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         return new ArrayList<>(); // Not implemented
     }
 
+    @Override
+    public List<Integer> getEliteFourTrainers(boolean isChallengeMode) {
+        return new ArrayList<>();
+    }
+
     public void setTrainers(List<Trainer> trainerData, boolean doubleBattleMode) {
         int traineroffset = romEntry.getValue("TrainerDataTableOffset");
         int traineramount = Gen1Constants.trainerClassCount;
@@ -1149,6 +1164,11 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
             rom[champRivalJump + 1] = GBConstants.gbZ80Nop;
         }
 
+    }
+
+    @Override
+    public boolean hasRivalFinalBattle() {
+        return true;
     }
 
     @Override
@@ -1311,6 +1331,17 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     public void setMovesLearnt(Map<Integer, List<MoveLearnt>> movesets) {
         // new method for moves learnt
         writeEvosAndMovesLearnt(false, movesets);
+    }
+
+    @Override
+    public Map<Integer, List<Integer>> getEggMoves() {
+        // Gen 1 does not have egg moves
+        return new TreeMap<>();
+    }
+
+    @Override
+    public void setEggMoves(Map<Integer, List<Integer>> eggMoves) {
+        // Gen 1 does not have egg moves
     }
 
     private static class StaticPokemon {
@@ -1622,23 +1653,18 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
-    public Map<Integer, List<Integer>> getShopItems() {
+    public Map<Integer, Shop> getShopItems() {
         return null; // Not implemented
     }
 
     @Override
-    public void setShopItems(Map<Integer, List<Integer>> shopItems) {
+    public void setShopItems(Map<Integer, Shop> shopItems) {
         // Not implemented
     }
 
     @Override
     public void setShopPrices() {
         // Not implemented
-    }
-
-    @Override
-    public List<Integer> getMainGameShops() {
-        return new ArrayList<>();
     }
 
     private List<String> getTrainerClassesForText() {
@@ -2548,6 +2574,11 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         if (extraSpaceEnabled) {
             System.arraycopy(extraDataBlock, 0, rom, extraSpaceOffset, extraDataBlock.length);
         }
+    }
+
+    @Override
+    public boolean isRomValid() {
+        return romEntry.expectedCRC32 == actualCRC32;
     }
 
     @Override
