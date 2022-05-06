@@ -169,7 +169,7 @@ public class Pokemon implements Comparable<Pokemon> {
         // Get a new bst, and a "role" (specialist vs generalist)
         int new_bst = pickNewBSTLogNorm(random, boss);
         double role_modifier = random.nextDouble();
-        System.out.printf("%15s%4.3f\n", name, role_modifier);
+        System.out.printf("%15s %4.3f\n", name, role_modifier);
         double atkW = getStatRatio(random, role_modifier), defW = getStatRatio(random, role_modifier);
         double spaW = getStatRatio(random, role_modifier), spdW = getStatRatio(random, role_modifier);
         double speW = getStatRatio(random, role_modifier), hpW  = getStatRatio(random, role_modifier);
@@ -243,7 +243,7 @@ public class Pokemon implements Comparable<Pokemon> {
 
     /**
      * Picks a new BST total, depending on whether this is a Mega, fully evolved, or neither
-     * @return
+     * @return A BST depending on what kind of pokemon and settings are used
      */
     private int pickNewBSTLogNorm(Random random, Pokemon boss) {
         int res;
@@ -308,7 +308,7 @@ public class Pokemon implements Comparable<Pokemon> {
 
     private double getStatRatio(Random random, double roleModifier) {
         double x = random.nextDouble();
-        double maxRatio = 8.5;
+        double maxRatio = 15;
         double offset = 1.0/(maxRatio - 1);
         return (1.0/(2*Math.PI)) * (2*roleModifier - 1) * Math.sin(2*Math.PI*x) + x + offset;
     }
