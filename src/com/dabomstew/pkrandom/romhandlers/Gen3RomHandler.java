@@ -3984,4 +3984,65 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         }
         return items;
     }
+
+    @Override
+    protected ArrayList<ArrayList<Trainer>> getBossSet(List<Trainer> trainers) {
+        ArrayList<ArrayList<Trainer>> res = new ArrayList<>();
+        if(this.romEntry.romType == Gen3Constants.RomType_Em) {
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("UBER"))    .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("CHAMPION"))    .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE4"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE3"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE2"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE1"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM8-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM7-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM6-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM5-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM4-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM3-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM2-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM1-LEADER")) .collect(Collectors.toList())));
+
+        } else if(this.romEntry.romType == Gen3Constants.RomType_FRLG) {
+
+            // Added the Gio fights here, since they feel appropriate.
+            // Might take them out, since the dungeon is more of a boss than the trainer at the end
+            res.add(new ArrayList<>(trainers.stream()
+                    .filter(t -> t.tag != null && (t.tag .equals("RIVAL8-0") || t.tag .equals("RIVAL8-1") || t.tag .equals("RIVAL8-2")))
+                    .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE4-1"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE3-1"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE2-1"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE1-1"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM8-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM7-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM6-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GIO2-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM5-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GIO1-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM4-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM3-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM2-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM1-LEADER")) .collect(Collectors.toList())));
+
+        } else if(this.romEntry.romType == Gen3Constants.RomType_Ruby
+                ||this.romEntry.romType == Gen3Constants.RomType_Sapp) {
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("CHAMPION"))    .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE4"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE3"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE2"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE1"))      .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM8-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM7-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM6-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM5-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM4-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM3-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM2-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM1-LEADER")) .collect(Collectors.toList())));
+
+        }
+        return res;
+    }
 }

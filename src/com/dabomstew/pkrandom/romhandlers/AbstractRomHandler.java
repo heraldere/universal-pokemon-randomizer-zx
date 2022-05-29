@@ -306,27 +306,37 @@ public abstract class AbstractRomHandler implements RomHandler {
      */
     @Override
     public void randomizePokemonStats_Log(Settings settings) {
-        //On outset, I'm assuming that the EvosFrom and EvosTo fields are entirely distinct from the Mega versions
+        /*
+        Some quick recap, mainPokemonList is a list of all pokemon from the rom
+            excluding alternate formes and mega evolutions
+        mainPokemonListInclAltFormes contains all pokemon and formes and mega evolutions
+        altFormeList contains only alternate formes AND mega evolutions
+         */
+        Pokemon boss;
 
-        // We need to start with the pokemon that don't evolve
-
-        //TODO: Figure out what to do about alt formes
         List<Pokemon> sortedList = new ArrayList<>(mainPokemonList);
         sortedList.sort(Comparator.comparingInt(o -> o.getEvFromDepth() + o.megaEvolutionsTo.size()));
         List<Pokemon> fullyEvolvedPokemon = sortedList
                 .stream()
                 .filter(o -> o.evolutionsFrom.size() + o.megaEvolutionsTo.size() == 0 )
                 .collect(Collectors.toList());
-        Pokemon boss = fullyEvolvedPokemon.get(random.nextInt(fullyEvolvedPokemon.size()));
+        if(settings.isBaseStatsFollowEvolutions()) {
+            boss = fullyEvolvedPokemon.get(random.nextInt(fullyEvolvedPokemon.size()));
+        } else {
+            boss = mainPokemonList.get(random.nextInt(mainPokemonList.size()));
+        }
 
         for(Pokemon poke: sortedList){
-            if(poke != null){
-                poke.randomizeStatsLogNorm(this.random, boss);
+            if(poke == boss && settings.isGuaranteeStrongPokemon()) {
+                poke.randomizeStatsBoss(this.random, settings);
+            }
+            else if(poke != null){
+                poke.randomizeStatsLogNorm(this.random, settings);
             }
         }
 
         for(Pokemon form: altFormesList) {
-            form.randomizeStatsLogNorm(this.random, boss);
+            form.randomizeStatsLogNorm(this.random, settings);
         }
     }
 
@@ -1960,10 +1970,10 @@ public abstract class AbstractRomHandler implements RomHandler {
                 for(Trainer t: tl) {
                     bossMonIdx = Math.max(bossMonIdx, t.pokemon.size());
                     //Get sorted list of boss pokemon by level
-                    List<TrainerPokemon> mons = new ArrayList<TrainerPokemon>(t.pokemon);
+                    List<TrainerPokemon> mons = new ArrayList<>(t.pokemon);
                     mons.sort((p1, p2) -> p2.level - p1.level);
                     for(int i = 0; i < t.pokemon.size(); i++) {
-                        TrainerPokemon mon = t.pokemon.get(i);
+                        TrainerPokemon mon = mons.get(i);
                         mon.pokemon = pokesDescendingPower.get(i);
                     }
                 }

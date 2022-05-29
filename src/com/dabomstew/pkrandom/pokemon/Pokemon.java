@@ -25,6 +25,7 @@ package com.dabomstew.pkrandom.pokemon;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
+import com.dabomstew.pkrandom.Settings;
 import com.dabomstew.pkrandom.constants.Species;
 
 import java.util.ArrayList;
@@ -155,11 +156,21 @@ public class Pokemon implements Comparable<Pokemon> {
 
     }
 
-    public void randomizeStatsLogNorm(Random random, Pokemon boss) {
+    public void randomizeStatsLogNorm(Random random, Settings settings) {
         // Get a new bst, and a "role" (specialist vs generalist)
-        int new_bst = pickNewBSTLogNorm(random, boss);
+        int new_bst = pickNewBSTLogNorm(random, settings);
+        distributeStatsLogNorm(random, new_bst);
+    }
+
+    public void randomizeStatsBoss(Random random, Settings settings) {
+        //TODO: Eventually I'd like this range to be controllable from a setting
+        int bst = 800 + random.nextInt(101);
+        distributeStatsLogNorm(random, bst);
+    }
+
+    private void distributeStatsLogNorm(Random random, int new_bst) {
         double role_modifier = random.nextDouble();
-        System.out.printf("%15s %4.3f\n", name, role_modifier);
+//        System.out.printf("%15s %4.3f\n", name, role_modifier);
         double atkW = getStatRatio(random, role_modifier), defW = getStatRatio(random, role_modifier);
         double spaW = getStatRatio(random, role_modifier), spdW = getStatRatio(random, role_modifier);
         double speW = getStatRatio(random, role_modifier), hpW  = getStatRatio(random, role_modifier);
@@ -235,24 +246,28 @@ public class Pokemon implements Comparable<Pokemon> {
      * Picks a new BST total, depending on whether this is a Mega, fully evolved, or neither
      * @return A BST depending on what kind of pokemon and settings are used
      */
-    private int pickNewBSTLogNorm(Random random, Pokemon boss) {
+    private int pickNewBSTLogNorm(Random random, Settings settings) {
         int res;
 
-        // TODO: Extract this part, remove the boss parameter and place this in Randomizer.java
-        if (this.equals(boss)) {
-            res = 800 + random.nextInt(101);
+        // If we don't care about following evolutions, just do it totally randomly
+        if(!settings.isBaseStatsFollowEvolutions()) {
+            res = generateLogNormBST(random, settings);
         }
+        // If it's a mega evo, just add some bst onto its base forme
+        else if(megaEvolutionsTo.size() > 0) {
+            res = megaEvolutionsTo.get(0).from.bst() + random.nextInt(151);
+        }
+        // If it's any other alt forme, it should have the same bst
         else if(baseForme != null) {
             res = baseForme.bst();
         }
-        else if (evolutionsFrom.size() == 0 && megaEvolutionsTo.size() == 0) {
-            res = generateLogNormBST(random);
+        // If it's fully evolved, pick its bst following log norm distribution
+        else if (evolutionsFrom.size() == 0) {
+            res = generateLogNormBST(random, settings);
         }
-        else if(megaEvolutionsTo.size() > 0) {
-            // I think it's fun if megas aren't a strict upgrade (may not be fun, so open to change)
-            res = megaEvolutionsTo.get(0).from.bst() + random.nextInt(151);
-        } else {
-
+        // If it's not fully evolved, and we're following evos, it's kinda complicated
+        else {
+            //TODO: Maybe inline or extract a function?
             int evMin = Collections.min(
                     evolutionsFrom.stream()
                             .map(evoFrom -> evoFrom.to.bst())
@@ -276,22 +291,41 @@ public class Pokemon implements Comparable<Pokemon> {
         return res;
     }
 
-    private int generateLogNormBST(Random random) {
-        double norm = random.nextGaussian();
+    private int generateLogNormBST(Random random, Settings settings) {
+        /*
+        Depending on whether we want bsts to follow evolutions, we want to use slightly different distributions
 
-        // Set parameters of distribution:
+        The Follow Evolutions distribution was derived by analyzing the vanilla pokemon bst distribution
+
+        The Non-follow evolutions distribution is a shot in the dark, because we don't really have a good baseline
+         */
+
+        // TODO: Extract these as parameters, then just manually input them when we call the function
 
         // Minimum value (it is impossible to return something lower than this)
-        int minimum = 300;
+        int minimum;
 
         // Half of all values will be lower/higher than this (on average)
-        int median = 500;
+        int median;
 
         // Represents a remarkably high value we would expect to see in the distribution
-        int high_value = 700;
+        int high_value;
 
-        // How often we want to see that remarkably high value (as a z-score)
-        double z_score = 2.1701; // this z score corresponds to (2.3263 for 1%, 1.2816 for 10%).
+        // How often we want to see something greater than or equal to that remarkably high value (as a z-score)
+        double z_score;
+
+        if(settings.isBaseStatsFollowEvolutions()) {
+            minimum = 300;
+            median = 500;
+            high_value = 700;
+            z_score = 2.1701; // this z score corresponds to 1.5%.
+        } else {
+            minimum = 150;
+            median = 450;
+            high_value = 700;
+            z_score = 2.5758;// this z score corresponds to .5%.
+        }
+        double norm = random.nextGaussian();
 
         return (int) Math.round(minimum + (median - minimum) * Math.pow((high_value - minimum + 0.0)/(median - minimum + 0.0), (norm / z_score)));
     }
@@ -487,5 +521,4 @@ public class Pokemon implements Comparable<Pokemon> {
     public int getCosmeticFormNumber(int num) {
         return realCosmeticFormNumbers.isEmpty() ? num : realCosmeticFormNumbers.get(num);
     }
-
 }

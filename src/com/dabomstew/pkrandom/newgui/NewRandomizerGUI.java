@@ -295,6 +295,8 @@ public class NewRandomizerGUI {
     private JRadioButton peRandomEveryLevelRadioButton;
     private JCheckBox miscFastDistortionWorldCheckBox;
     private JComboBox tpComboBox;
+    private JCheckBox pbsForceOneStrongPokemonCheckBox;
+    private JCheckBox tpBossesGetStrongestPokemonCheckBox;
 
     private static JFrame frame;
 
@@ -1362,6 +1364,7 @@ public class NewRandomizerGUI {
         pbsEXPCurveComboBox.setSelectedIndex(index);
         pbsFollowMegaEvosCheckBox.setSelected(settings.isBaseStatsFollowMegaEvolutions());
         pbsAssignEvoStatsRandomlyCheckBox.setSelected(settings.isAssignEvoStatsRandomly());
+        pbsForceOneStrongPokemonCheckBox.setSelected(settings.isGuaranteeStrongPokemon());
 
         paUnchangedRadioButton.setSelected(settings.getAbilitiesMod() == Settings.AbilitiesMod.UNCHANGED);
         paRandomRadioButton.setSelected(settings.getAbilitiesMod() == Settings.AbilitiesMod.RANDOMIZE);
@@ -1449,6 +1452,7 @@ public class NewRandomizerGUI {
         tpConsumableItemsOnlyCheckBox.setSelected(settings.isConsumableItemsOnlyForTrainers());
         tpSensibleItemsCheckBox.setSelected(settings.isSensibleItemsOnlyForTrainers());
         tpHighestLevelGetsItemCheckBox.setSelected(settings.isHighestLevelGetsItemsForTrainers());
+        tpBossesGetStrongestPokemonCheckBox.setSelected(settings.isBossesGetStrongPokemon());
 
         tpRandomShinyTrainerPokemonCheckBox.setSelected(settings.isShinyChance());
 
@@ -1605,6 +1609,7 @@ public class NewRandomizerGUI {
         settings.setSelectedEXPCurve(expCurves[pbsEXPCurveComboBox.getSelectedIndex()]);
         settings.setBaseStatsFollowMegaEvolutions(pbsFollowMegaEvosCheckBox.isSelected() && pbsFollowMegaEvosCheckBox.isVisible());
         settings.setAssignEvoStatsRandomly(pbsAssignEvoStatsRandomlyCheckBox.isSelected() && pbsAssignEvoStatsRandomlyCheckBox.isVisible());
+        settings.setGuaranteeStrongPokemon(pbsForceOneStrongPokemonCheckBox.isSelected() /* && pbsForceOneStrongPokemonCheckBox.isVisible() */);
 
         settings.setAbilitiesMod(paUnchangedRadioButton.isSelected(), paRandomRadioButton.isSelected());
         settings.setAllowWonderGuard(paAllowWonderGuardCheckBox.isSelected());
@@ -1684,6 +1689,7 @@ public class NewRandomizerGUI {
         settings.setConsumableItemsOnlyForTrainers(tpConsumableItemsOnlyCheckBox.isVisible() && tpConsumableItemsOnlyCheckBox.isSelected());
         settings.setSensibleItemsOnlyForTrainers(tpSensibleItemsCheckBox.isVisible() && tpSensibleItemsCheckBox.isSelected());
         settings.setHighestLevelGetsItemsForTrainers(tpHighestLevelGetsItemCheckBox.isVisible() && tpHighestLevelGetsItemCheckBox.isSelected());
+        settings.setBossesGetStrongPokemon(tpBossesGetStrongestPokemonCheckBox.isSelected() /* && tpBossesGetStrongestPokemonCheckBox.isVisible()*/);
 
         settings.setTotemPokemonMod(totpUnchangedRadioButton.isSelected(), totpRandomRadioButton.isSelected(), totpRandomSimilarStrengthRadioButton.isSelected());
         settings.setAllyPokemonMod(totpAllyUnchangedRadioButton.isSelected(), totpAllyRandomRadioButton.isSelected(), totpAllyRandomSimilarStrengthRadioButton.isSelected());

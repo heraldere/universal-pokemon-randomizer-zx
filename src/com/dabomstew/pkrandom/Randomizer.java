@@ -71,6 +71,10 @@ public class Randomizer {
 
         int checkValue = 0;
 
+        // TODO: Get rid of these and make GUI interface work properly
+//        settings.setBossesGetStrongPokemon(true);
+//        settings.setGuaranteeStrongPokemon(true);
+
         log.println("Randomizer Version: " + Version.VERSION_STRING);
         log.println("Random Seed: " + seed);
         log.println("Settings String: " + Version.VERSION + settings.toString());
@@ -93,6 +97,11 @@ public class Randomizer {
         boolean tmsHmsCompatChanged = false;
         boolean tutorCompatChanged = false;
         boolean shopsChanged = false;
+
+        //TODO: Add an actual GUI radiobox for this
+        if(settings.getBaseStatisticsMod() == Settings.BaseStatisticsMod.RANDOM){
+            settings.setBaseStatisticsMod(Settings.BaseStatisticsMod.LOG_NORM);
+        }
 
         // Limit Pokemon
         // 1. Set Pokemon pool according to limits (or lack thereof)
@@ -186,7 +195,6 @@ public class Randomizer {
             logEvolutionChanges(log);
         }
 
-        settings.setBaseStatisticsMod(Settings.BaseStatisticsMod.LOG_NORM); //Forces my version (remove this line and reset the method to private)
         // Base stat randomization
         switch (settings.getBaseStatisticsMod()) {
             case SHUFFLE:
@@ -200,6 +208,7 @@ public class Randomizer {
             case LOG_NORM:
                 romHandler.randomizePokemonStats_Log(settings);
                 pokemonTraitsChanged = true;
+                settings.setBaseStatisticsMod(Settings.BaseStatisticsMod.RANDOM);
                 break;
             default:
                 break;
@@ -367,7 +376,7 @@ public class Randomizer {
             trainersChanged = true;
         }
 
-        if(true) {
+        if(settings.isBossesGetStrongPokemon()) {
             romHandler.bossAcePokemon(settings);
             trainersChanged = true;
         }

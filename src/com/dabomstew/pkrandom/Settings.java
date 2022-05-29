@@ -66,6 +66,24 @@ public class Settings {
     private boolean limitPokemon;
     private boolean banIrregularAltFormes;
     private boolean dualTypeOnly;
+    private boolean guaranteeStrongPokemon;
+    private boolean bossesGetStrongPokemon;
+
+    public boolean isGuaranteeStrongPokemon() {
+        return guaranteeStrongPokemon;
+    }
+
+    public void setGuaranteeStrongPokemon(boolean guaranteeStrongPokemon) {
+        this.guaranteeStrongPokemon = guaranteeStrongPokemon;
+    }
+
+    public boolean isBossesGetStrongPokemon() {
+        return bossesGetStrongPokemon;
+    }
+
+    public void setBossesGetStrongPokemon(boolean bossesGetStrongPokemon) {
+        this.bossesGetStrongPokemon = bossesGetStrongPokemon;
+    }
 
     public enum BaseStatisticsMod {
         UNCHANGED, SHUFFLE, RANDOM, LOG_NORM
@@ -574,8 +592,11 @@ public class Settings {
         // 49 pickup item randomization
         out.write(makeByteSelected(pickupItemsMod == PickupItemsMod.RANDOM,
                 pickupItemsMod == PickupItemsMod.UNCHANGED, banBadRandomPickupItems,
-                banIrregularAltFormes));
-
+                banIrregularAltFormes, guaranteeStrongPokemon, bossesGetStrongPokemon));
+        int checkval = makeByteSelected(pickupItemsMod == PickupItemsMod.RANDOM,
+                pickupItemsMod == PickupItemsMod.UNCHANGED, banBadRandomPickupItems,
+                banIrregularAltFormes, guaranteeStrongPokemon, bossesGetStrongPokemon);
+        byte[] checks = out.toByteArray();
         // 50 elite four unique pokemon (3 bits)
         out.write(eliteFourUniquePokemonNumber);
 
@@ -864,6 +885,9 @@ public class Settings {
                 0));       // RANDOMIZE
         settings.setBanBadRandomPickupItems(restoreState(data[49], 2));
         settings.setBanIrregularAltFormes(restoreState(data[49], 3));
+        //Herald's Super Secret Settings Section
+        settings.setGuaranteeStrongPokemon(restoreState(data[49], 4));
+        settings.setBossesGetStrongPokemon(restoreState(data[49], 5));
 
         settings.setEliteFourUniquePokemonNumber(data[50] & 0x7);
 

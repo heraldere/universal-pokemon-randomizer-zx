@@ -321,6 +321,17 @@
                       <toolTipText resource-bundle="com/dabomstew/pkrandom/newgui/Bundle" key="GUI.pbsAllMediumFastRadioButton.toolTipText"/>
                     </properties>
                   </component>
+                  <component id="3fafd" class="javax.swing.JCheckBox" binding="pbsForceOneStrongPokemonCheckBox">
+                    <constraints>
+                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Force At Least One Strong Pokemon"/>
+                      <toolTipText value="&lt;html&gt;When Base Stat totals are randomized, force at least one pokemon to have more than 800 BST"/>
+                      <visible value="false"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
               <hspacer id="17e6a">
@@ -1911,6 +1922,18 @@
                       <enabled value="false"/>
                       <text resource-bundle="com/dabomstew/pkrandom/newgui/Bundle" key="GUI.tpHighestLevelGetsItemCheckBox.text"/>
                       <toolTipText resource-bundle="com/dabomstew/pkrandom/newgui/Bundle" key="GUI.tpHighestLevelGetsItemCheckBox.tooltip"/>
+                    </properties>
+                  </component>
+                  <component id="46366" class="javax.swing.JCheckBox" binding="tpBossesGetStrongestPokemonCheckBox">
+                    <constraints>
+                      <grid row="9" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <name value=""/>
+                      <text value="Bosses get strongest Pokemon"/>
+                      <toolTipText value="&lt;html&gt;Replaces the ace of each Gym Leader/Elite 4 member with one of the strongest pokemon in the game. &lt;p&gt;The Champion/Final boss has their entire team replaced with strong pokemon"/>
+                      <visible value="false"/>
                     </properties>
                   </component>
                 </children>
