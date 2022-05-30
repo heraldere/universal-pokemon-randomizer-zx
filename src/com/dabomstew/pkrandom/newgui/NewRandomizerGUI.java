@@ -297,6 +297,7 @@ public class NewRandomizerGUI {
     private JComboBox tpComboBox;
     private JCheckBox pbsForceOneStrongPokemonCheckBox;
     private JCheckBox tpBossesGetStrongestPokemonCheckBox;
+    private JRadioButton pbsRandomBaseStatTotalsRadioButton;
 
     private static JFrame frame;
 
@@ -408,6 +409,7 @@ public class NewRandomizerGUI {
         pbsUnchangedRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pbsShuffleRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pbsRandomRadioButton.addActionListener(e -> enableOrDisableSubControls());
+        pbsRandomBaseStatTotalsRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pbsFollowMegaEvosCheckBox.addActionListener(e -> enableOrDisableSubControls());
         pbsFollowEvolutionsCheckBox.addActionListener(e -> enableOrDisableSubControls());
         pbsStandardizeEXPCurvesCheckBox.addActionListener(e -> enableOrDisableSubControls());
@@ -1347,6 +1349,7 @@ public class NewRandomizerGUI {
         pbsRandomRadioButton.setSelected(settings.getBaseStatisticsMod() == Settings.BaseStatisticsMod.RANDOM);
         pbsShuffleRadioButton.setSelected(settings.getBaseStatisticsMod() == Settings.BaseStatisticsMod.SHUFFLE);
         pbsUnchangedRadioButton.setSelected(settings.getBaseStatisticsMod() == Settings.BaseStatisticsMod.UNCHANGED);
+        pbsRandomBaseStatTotalsRadioButton.setSelected(settings.getBaseStatisticsMod() == Settings.BaseStatisticsMod.LOG_NORM);
         pbsFollowEvolutionsCheckBox.setSelected(settings.isBaseStatsFollowEvolutions());
         pbsUpdateBaseStatsCheckBox.setSelected(settings.isUpdateBaseStats());
         pbsUpdateComboBox.setSelectedIndex(Math.max(0,settings.getUpdateBaseStatsToGeneration() - (Math.max(6,romHandler.generationOfPokemon()+1))));
@@ -1598,7 +1601,7 @@ public class NewRandomizerGUI {
         settings.setRandomizeTrainerClassNames(tpRandomizeTrainerClassNamesCheckBox.isSelected());
 
         settings.setBaseStatisticsMod(pbsUnchangedRadioButton.isSelected(), pbsShuffleRadioButton.isSelected(),
-                pbsRandomRadioButton.isSelected());
+                pbsRandomRadioButton.isSelected(), pbsRandomBaseStatTotalsRadioButton.isSelected());
         settings.setBaseStatsFollowEvolutions(pbsFollowEvolutionsCheckBox.isSelected());
         settings.setUpdateBaseStats(pbsUpdateBaseStatsCheckBox.isSelected() && pbsUpdateBaseStatsCheckBox.isVisible());
         settings.setUpdateBaseStatsToGeneration(pbsUpdateComboBox.getSelectedIndex() + (Math.max(6,romHandler.generationOfPokemon()+1)));
@@ -1921,6 +1924,9 @@ public class NewRandomizerGUI {
         pbsRandomRadioButton.setVisible(true);
         pbsRandomRadioButton.setEnabled(false);
         pbsRandomRadioButton.setSelected(false);
+        pbsRandomBaseStatTotalsRadioButton.setVisible(true);
+        pbsRandomBaseStatTotalsRadioButton.setEnabled(false);
+        pbsRandomBaseStatTotalsRadioButton.setSelected(false);
         pbsLegendariesSlowRadioButton.setVisible(true);
         pbsLegendariesSlowRadioButton.setEnabled(false);
         pbsLegendariesSlowRadioButton.setSelected(false);
@@ -2564,6 +2570,7 @@ public class NewRandomizerGUI {
             pbsUnchangedRadioButton.setSelected(true);
             pbsShuffleRadioButton.setEnabled(true);
             pbsRandomRadioButton.setEnabled(true);
+            pbsRandomBaseStatTotalsRadioButton.setEnabled(true);
 
             pbsStandardizeEXPCurvesCheckBox.setEnabled(true);
             pbsLegendariesSlowRadioButton.setSelected(true);
@@ -3003,6 +3010,12 @@ public class NewRandomizerGUI {
         } else {
             pbsAssignEvoStatsRandomlyCheckBox.setEnabled(false);
             pbsAssignEvoStatsRandomlyCheckBox.setSelected(false);
+        }
+
+        if (pbsRandomBaseStatTotalsRadioButton.isSelected()) {
+            pbsUpdateBaseStatsCheckBox.setEnabled(false);
+        } else {
+            pbsUpdateBaseStatsCheckBox.setEnabled(romHandler.generationOfPokemon() < 8);
         }
 
         if (pbsStandardizeEXPCurvesCheckBox.isSelected()) {

@@ -592,7 +592,8 @@ public class Settings {
         // 49 pickup item randomization
         out.write(makeByteSelected(pickupItemsMod == PickupItemsMod.RANDOM,
                 pickupItemsMod == PickupItemsMod.UNCHANGED, banBadRandomPickupItems,
-                banIrregularAltFormes, guaranteeStrongPokemon, bossesGetStrongPokemon));
+                banIrregularAltFormes, guaranteeStrongPokemon, bossesGetStrongPokemon,
+                baseStatisticsMod  == BaseStatisticsMod.LOG_NORM));
         int checkval = makeByteSelected(pickupItemsMod == PickupItemsMod.RANDOM,
                 pickupItemsMod == PickupItemsMod.UNCHANGED, banBadRandomPickupItems,
                 banIrregularAltFormes, guaranteeStrongPokemon, bossesGetStrongPokemon);
@@ -637,9 +638,12 @@ public class Settings {
         settings.setMakeEvolutionsEasier(restoreState(data[0], 5));
         settings.setRemoveTimeBasedEvolutions(restoreState(data[0], 6));
 
-        settings.setBaseStatisticsMod(restoreEnum(BaseStatisticsMod.class, data[1], 3, // UNCHANGED
+        // There's more of this in the future if we need more settings.
+        byte statByte = (byte) ((data[1] & 0b00001110) | (data[49] & 0b01000000));
+        settings.setBaseStatisticsMod(restoreEnum(BaseStatisticsMod.class, statByte, 3, // UNCHANGED
                 2, // SHUFFLE
-                1 // RANDOM
+                1, // RANDOM
+                6  // LOG_NORM
         ));
         settings.setStandardizeEXPCurves(restoreState(data[1], 4));
         settings.setBaseStatsFollowEvolutions(restoreState(data[1], 0));

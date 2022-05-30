@@ -332,6 +332,17 @@
                       <visible value="false"/>
                     </properties>
                   </component>
+                  <component id="7bb5e" class="javax.swing.JRadioButton" binding="pbsRandomBaseStatTotalsRadioButton">
+                    <constraints>
+                      <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <enabled value="false"/>
+                      <text value="Random Base Stat Totals"/>
+                      <toolTipText value="&lt;html&gt;Randomizes each Pokemon's Base Stat Total. &lt;br /&gt;(BSTs are chosen following a log-normal distribution, without regard for the original Base Stat Total of the Pokemon)"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
               <hspacer id="17e6a">
@@ -3790,6 +3801,7 @@
       <member id="4535b"/>
       <member id="e8460"/>
       <member id="576dd"/>
+      <member id="7bb5e"/>
     </group>
     <group name="expCurveButtonGroup">
       <member id="8625b"/>
