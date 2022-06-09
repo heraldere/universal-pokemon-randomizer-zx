@@ -450,6 +450,9 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
                 moves[trueMoveIndex].pp = rom[movesOffset + (i - 1) * 6 + 5] & 0xFF;
                 moves[trueMoveIndex].type = idToType(rom[movesOffset + (i - 1) * 6 + 3] & 0xFF);
                 moves[trueMoveIndex].category = GBConstants.physicalTypes.contains(moves[trueMoveIndex].type) ? MoveCategory.PHYSICAL : MoveCategory.SPECIAL;
+                if (moves[trueMoveIndex].power == 0 && !GlobalConstants.noPowerNonStatusMoves.contains(trueMoveIndex)) {
+                    moves[trueMoveIndex].category = MoveCategory.STATUS;
+                }
 
                 if (moves[trueMoveIndex].name.equals("Swift")) {
                     perfectAccuracy = (int)moves[trueMoveIndex].hitratio;
@@ -460,9 +463,233 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
                 } else if (GlobalConstants.doubleHitMoves.contains(i)) {
                     moves[trueMoveIndex].hitCount = 2;
                 }
+
+                loadStatChangesFromEffect(moves[trueMoveIndex]);
+                loadStatusFromEffect(moves[trueMoveIndex]);
+                loadMiscMoveInfoFromEffect(moves[trueMoveIndex]);
             }
         }
+    }
 
+    private void loadStatChangesFromEffect(Move move) {
+        switch (move.effectIndex) {
+            case Gen1Constants.noDamageAtkPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen1Constants.noDamageDefPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen1Constants.noDamageSpecialPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen1Constants.noDamageEvasionPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.EVASION;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen1Constants.noDamageAtkMinusOneEffect:
+            case Gen1Constants.damageAtkMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen1Constants.noDamageDefMinusOneEffect:
+            case Gen1Constants.damageDefMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen1Constants.noDamageSpeMinusOneEffect:
+            case Gen1Constants.damageSpeMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPEED;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen1Constants.noDamageAccuracyMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.ACCURACY;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen1Constants.noDamageAtkPlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen1Constants.noDamageDefPlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen1Constants.noDamageSpePlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPEED;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen1Constants.noDamageSpecialPlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen1Constants.noDamageDefMinusTwoEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = -2;
+                break;
+            case Gen1Constants.damageSpecialMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL;
+                move.statChanges[0].stages = -1;
+                break;
+            default:
+                // Move does not have a stat-changing effect
+                return;
+        }
+
+        switch (move.effectIndex) {
+            case Gen1Constants.noDamageAtkPlusOneEffect:
+            case Gen1Constants.noDamageDefPlusOneEffect:
+            case Gen1Constants.noDamageSpecialPlusOneEffect:
+            case Gen1Constants.noDamageEvasionPlusOneEffect:
+            case Gen1Constants.noDamageAtkMinusOneEffect:
+            case Gen1Constants.noDamageDefMinusOneEffect:
+            case Gen1Constants.noDamageSpeMinusOneEffect:
+            case Gen1Constants.noDamageAccuracyMinusOneEffect:
+            case Gen1Constants.noDamageAtkPlusTwoEffect:
+            case Gen1Constants.noDamageDefPlusTwoEffect:
+            case Gen1Constants.noDamageSpePlusTwoEffect:
+            case Gen1Constants.noDamageSpecialPlusTwoEffect:
+            case Gen1Constants.noDamageDefMinusTwoEffect:
+                if (move.statChanges[0].stages < 0) {
+                    move.statChangeMoveType = StatChangeMoveType.NO_DAMAGE_TARGET;
+                } else {
+                    move.statChangeMoveType = StatChangeMoveType.NO_DAMAGE_USER;
+                }
+                break;
+
+            case Gen1Constants.damageAtkMinusOneEffect:
+            case Gen1Constants.damageDefMinusOneEffect:
+            case Gen1Constants.damageSpeMinusOneEffect:
+            case Gen1Constants.damageSpecialMinusOneEffect:
+                move.statChangeMoveType = StatChangeMoveType.DAMAGE_TARGET;
+                break;
+        }
+
+        if (move.statChangeMoveType == StatChangeMoveType.DAMAGE_TARGET) {
+            for (int i = 0; i < move.statChanges.length; i++) {
+                if (move.statChanges[i].type != StatChangeType.NONE) {
+                    move.statChanges[i].percentChance = 85 / 256.0;
+                }
+            }
+        }
+    }
+
+    private void loadStatusFromEffect(Move move) {
+        switch (move.effectIndex) {
+            case Gen1Constants.noDamageSleepEffect:
+            case Gen1Constants.noDamageConfusionEffect:
+            case Gen1Constants.noDamagePoisonEffect:
+            case Gen1Constants.noDamageParalyzeEffect:
+                move.statusMoveType = StatusMoveType.NO_DAMAGE;
+                break;
+
+            case Gen1Constants.damagePoison20PercentEffect:
+            case Gen1Constants.damageBurn10PercentEffect:
+            case Gen1Constants.damageFreeze10PercentEffect:
+            case Gen1Constants.damageParalyze10PercentEffect:
+            case Gen1Constants.damagePoison40PercentEffect:
+            case Gen1Constants.damageBurn30PercentEffect:
+            case Gen1Constants.damageFreeze30PercentEffect:
+            case Gen1Constants.damageParalyze30PercentEffect:
+            case Gen1Constants.damageConfusionEffect:
+            case Gen1Constants.twineedleEffect:
+                move.statusMoveType = StatusMoveType.DAMAGE;
+                break;
+
+            default:
+                // Move does not have a status effect
+                return;
+        }
+
+        switch (move.effectIndex) {
+            case Gen1Constants.noDamageSleepEffect:
+                move.statusType = StatusType.SLEEP;
+                break;
+            case Gen1Constants.damagePoison20PercentEffect:
+            case Gen1Constants.damagePoison40PercentEffect:
+            case Gen1Constants.noDamagePoisonEffect:
+            case Gen1Constants.twineedleEffect:
+                move.statusType = StatusType.POISON;
+                if (move.number == Moves.toxic) {
+                    move.statusType = StatusType.TOXIC_POISON;
+                }
+                break;
+            case Gen1Constants.damageBurn10PercentEffect:
+            case Gen1Constants.damageBurn30PercentEffect:
+                move.statusType = StatusType.BURN;
+                break;
+            case Gen1Constants.damageFreeze10PercentEffect:
+            case Gen1Constants.damageFreeze30PercentEffect:
+                move.statusType = StatusType.FREEZE;
+                break;
+            case Gen1Constants.damageParalyze10PercentEffect:
+            case Gen1Constants.damageParalyze30PercentEffect:
+            case Gen1Constants.noDamageParalyzeEffect:
+                move.statusType = StatusType.PARALYZE;
+                break;
+            case Gen1Constants.noDamageConfusionEffect:
+            case Gen1Constants.damageConfusionEffect:
+                move.statusType = StatusType.CONFUSION;
+                break;
+        }
+
+        if (move.statusMoveType == StatusMoveType.DAMAGE) {
+            switch (move.effectIndex) {
+                case Gen1Constants.damageBurn10PercentEffect:
+                case Gen1Constants.damageFreeze10PercentEffect:
+                case Gen1Constants.damageParalyze10PercentEffect:
+                case Gen1Constants.damageConfusionEffect:
+                    move.statusPercentChance = 10.0;
+                    break;
+                case Gen1Constants.damagePoison20PercentEffect:
+                case Gen1Constants.twineedleEffect:
+                    move.statusPercentChance = 20.0;
+                    break;
+                case Gen1Constants.damageBurn30PercentEffect:
+                case Gen1Constants.damageFreeze30PercentEffect:
+                case Gen1Constants.damageParalyze30PercentEffect:
+                    move.statusPercentChance = 30.0;
+                    break;
+                case Gen1Constants.damagePoison40PercentEffect:
+                    move.statusPercentChance = 40.0;
+                    break;
+            }
+        }
+    }
+
+    private void loadMiscMoveInfoFromEffect(Move move) {
+        switch (move.effectIndex) {
+            case Gen1Constants.flinch10PercentEffect:
+                move.flinchPercentChance = 10.0;
+                break;
+
+            case Gen1Constants.flinch30PercentEffect:
+                move.flinchPercentChance = 30.0;
+                break;
+
+            case Gen1Constants.damageAbsorbEffect:
+            case Gen1Constants.dreamEaterEffect:
+                move.absorbPercent = 50;
+                break;
+
+            case Gen1Constants.damageRecoilEffect:
+                move.recoilPercent = 25;
+                break;
+
+            case Gen1Constants.chargeEffect:
+            case Gen1Constants.flyEffect:
+                move.isChargeMove = true;
+                break;
+
+            case Gen1Constants.hyperBeamEffect:
+                move.isRechargeMove = true;
+                break;
+        }
+
+        if (Gen1Constants.increasedCritMoves.contains(move.number)) {
+            move.criticalChance = CriticalChance.INCREASED;
+        }
     }
 
     private void saveMoves() {
@@ -1047,13 +1274,16 @@ public class Gen1RomHandler extends AbstractGBCRomHandler {
         List<String> tcnames = getTrainerClassesForText();
 
         List<Trainer> allTrainers = new ArrayList<>();
+        int index = 0;
         for (int i = 1; i <= traineramount; i++) {
             int offs = pointers[i];
             int limit = trainerclasslimits[i];
             String tcname = tcnames.get(i - 1);
             for (int trnum = 0; trnum < limit; trnum++) {
+                index++;
                 Trainer tr = new Trainer();
                 tr.offset = offs;
+                tr.index = index;
                 tr.trainerclass = i;
                 tr.fullDisplayName = tcname;
                 int dataType = rom[offs] & 0xFF;

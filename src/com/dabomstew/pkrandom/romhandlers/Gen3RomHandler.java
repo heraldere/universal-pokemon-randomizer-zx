@@ -237,7 +237,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                                     current.tableFile = otherEntry.tableFile;
                                 }
                             }
-                        } else if (r[0].endsWith("Locator")) {
+                        } else if (r[0].endsWith("Locator") || r[0].endsWith("Prefix")) {
                             current.strings.put(r[0], r[1]);
                         } else {
                             if (r[1].startsWith("[") && r[1].endsWith("]")) {
@@ -482,7 +482,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         loadItemNames();
 
         allowedItems = Gen3Constants.allowedItems.copy();
-        nonBadItems = Gen3Constants.nonBadItems.copy();
+        nonBadItems = Gen3Constants.getNonBadItems(romEntry.romType).copy();
 
         actualCRC32 = FileFunctions.getCRC32(rom);
     }
@@ -791,6 +791,24 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             int pkoffs = offs + i * Gen3Constants.baseStatsEntrySize;
             loadBasicPokeStats(pk, pkoffs);
         }
+
+        // In these games, the alternate formes of Deoxys have hardcoded stats that are used 99% of the time;
+        // the only times these hardcoded stats are ignored are during Link Battles. Since not many people
+        // are using the randomizer to battle against others, let's just always use these stats.
+        if (romEntry.romType == Gen3Constants.RomType_FRLG || romEntry.romType == Gen3Constants.RomType_Em) {
+            String deoxysStatPrefix = romEntry.strings.get("DeoxysStatPrefix");
+            int offset = find(deoxysStatPrefix);
+            if (offset > 0) {
+                offset += deoxysStatPrefix.length() / 2; // because it was a prefix
+                Pokemon deoxys = pokes[Species.deoxys];
+                deoxys.hp = readWord(offset);
+                deoxys.attack = readWord(offset + 2);
+                deoxys.defense = readWord(offset + 4);
+                deoxys.speed = readWord(offset + 6);
+                deoxys.spatk = readWord(offset + 8);
+                deoxys.spdef = readWord(offset + 10);
+            }
+        }
     }
 
     private void savePokemonStats() {
@@ -805,6 +823,24 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             writeFixedLengthString(pk.name, stringOffset, nameLen);
             saveBasicPokeStats(pk, offs2 + i * Gen3Constants.baseStatsEntrySize);
         }
+
+        // Make sure to write to the hardcoded Deoxys stat location, since otherwise it will just have vanilla
+        // stats no matter what settings the user selected.
+        if (romEntry.romType == Gen3Constants.RomType_FRLG || romEntry.romType == Gen3Constants.RomType_Em) {
+            String deoxysStatPrefix = romEntry.strings.get("DeoxysStatPrefix");
+            int offset = find(deoxysStatPrefix);
+            if (offset > 0) {
+                offset += deoxysStatPrefix.length() / 2; // because it was a prefix
+                Pokemon deoxys = pokes[Species.deoxys];
+                writeWord(offset, deoxys.hp);
+                writeWord(offset + 2, deoxys.attack);
+                writeWord(offset + 4, deoxys.defense);
+                writeWord(offset + 6, deoxys.speed);
+                writeWord(offset + 8, deoxys.spatk);
+                writeWord(offset + 10, deoxys.spdef);
+            }
+        }
+
         writeEvolutions();
     }
 
@@ -824,8 +860,15 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             moves[i].power = rom[offs + i * 0xC + 1] & 0xFF;
             moves[i].pp = rom[offs + i * 0xC + 4] & 0xFF;
             moves[i].type = Gen3Constants.typeTable[rom[offs + i * 0xC + 2]];
+            moves[i].target = rom[offs + i * 0xC + 6] & 0xFF;
             moves[i].category = GBConstants.physicalTypes.contains(moves[i].type) ? MoveCategory.PHYSICAL : MoveCategory.SPECIAL;
+            if (moves[i].power == 0 && !GlobalConstants.noPowerNonStatusMoves.contains(i)) {
+                moves[i].category = MoveCategory.STATUS;
+            }
             moves[i].priority = rom[offs + i * 0xC + 7];
+            int flags = rom[offs + i * 0xC + 8] & 0xFF;
+            moves[i].makesContact = (flags & 1) != 0;
+            moves[i].isSoundMove = Gen3Constants.soundMoves.contains(moves[i].number);
 
             if (i == Moves.swift) {
                 perfectAccuracy = (int)moves[i].hitratio;
@@ -838,8 +881,362 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             } else if (i == Moves.tripleKick) {
                 moves[i].hitCount = 2.71; // this assumes the first hit lands
             }
+
+            int secondaryEffectChance = rom[offs + i * 0xC + 5] & 0xFF;
+            loadStatChangesFromEffect(moves[i], secondaryEffectChance);
+            loadStatusFromEffect(moves[i], secondaryEffectChance);
+            loadMiscMoveInfoFromEffect(moves[i], secondaryEffectChance);
+        }
+    }
+
+    private void loadStatChangesFromEffect(Move move, int secondaryEffectChance) {
+        switch (move.effectIndex) {
+            case Gen3Constants.noDamageAtkPlusOneEffect:
+            case Gen3Constants.noDamageDefPlusOneEffect:
+            case Gen3Constants.noDamageSpAtkPlusOneEffect:
+            case Gen3Constants.noDamageEvasionPlusOneEffect:
+            case Gen3Constants.noDamageAtkMinusOneEffect:
+            case Gen3Constants.noDamageDefMinusOneEffect:
+            case Gen3Constants.noDamageSpeMinusOneEffect:
+            case Gen3Constants.noDamageAccuracyMinusOneEffect:
+            case Gen3Constants.noDamageEvasionMinusOneEffect:
+            case Gen3Constants.noDamageAtkPlusTwoEffect:
+            case Gen3Constants.noDamageDefPlusTwoEffect:
+            case Gen3Constants.noDamageSpePlusTwoEffect:
+            case Gen3Constants.noDamageSpAtkPlusTwoEffect:
+            case Gen3Constants.noDamageSpDefPlusTwoEffect:
+            case Gen3Constants.noDamageAtkMinusTwoEffect:
+            case Gen3Constants.noDamageDefMinusTwoEffect:
+            case Gen3Constants.noDamageSpeMinusTwoEffect:
+            case Gen3Constants.noDamageSpDefMinusTwoEffect:
+            case Gen3Constants.minimizeEffect:
+            case Gen3Constants.swaggerEffect:
+            case Gen3Constants.defenseCurlEffect:
+            case Gen3Constants.flatterEffect:
+            case Gen3Constants.chargeEffect:
+            case Gen3Constants.noDamageAtkAndDefMinusOneEffect:
+            case Gen3Constants.noDamageDefAndSpDefPlusOneEffect:
+            case Gen3Constants.noDamageAtkAndDefPlusOneEffect:
+            case Gen3Constants.noDamageSpAtkAndSpDefPlusOneEffect:
+            case Gen3Constants.noDamageAtkAndSpePlusOneEffect:
+                if (move.target == 16) {
+                    move.statChangeMoveType = StatChangeMoveType.NO_DAMAGE_USER;
+                } else {
+                    move.statChangeMoveType = StatChangeMoveType.NO_DAMAGE_TARGET;
+                }
+                break;
+
+            case Gen3Constants.damageAtkMinusOneEffect:
+            case Gen3Constants.damageDefMinusOneEffect:
+            case Gen3Constants.damageSpeMinusOneEffect:
+            case Gen3Constants.damageSpAtkMinusOneEffect:
+            case Gen3Constants.damageSpDefMinusOneEffect:
+            case Gen3Constants.damageAccuracyMinusOneEffect:
+                move.statChangeMoveType = StatChangeMoveType.DAMAGE_TARGET;
+                break;
+
+            case Gen3Constants.damageUserDefPlusOneEffect:
+            case Gen3Constants.damageUserAtkPlusOneEffect:
+            case Gen3Constants.damageUserAllPlusOneEffect:
+            case Gen3Constants.damageUserAtkAndDefMinusOneEffect:
+            case Gen3Constants.damageUserSpAtkMinusTwoEffect:
+                move.statChangeMoveType = StatChangeMoveType.DAMAGE_USER;
+                break;
+
+            default:
+                // Move does not have a stat-changing effect
+                return;
         }
 
+        switch (move.effectIndex) {
+            case Gen3Constants.noDamageAtkPlusOneEffect:
+            case Gen3Constants.damageUserAtkPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen3Constants.noDamageDefPlusOneEffect:
+            case Gen3Constants.damageUserDefPlusOneEffect:
+            case Gen3Constants.defenseCurlEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen3Constants.noDamageSpAtkPlusOneEffect:
+            case Gen3Constants.flatterEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_ATTACK;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen3Constants.noDamageEvasionPlusOneEffect:
+            case Gen3Constants.minimizeEffect:
+                move.statChanges[0].type = StatChangeType.EVASION;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen3Constants.noDamageAtkMinusOneEffect:
+            case Gen3Constants.damageAtkMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.noDamageDefMinusOneEffect:
+            case Gen3Constants.damageDefMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.noDamageSpeMinusOneEffect:
+            case Gen3Constants.damageSpeMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPEED;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.noDamageAccuracyMinusOneEffect:
+            case Gen3Constants.damageAccuracyMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.ACCURACY;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.noDamageEvasionMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.EVASION;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.noDamageAtkPlusTwoEffect:
+            case Gen3Constants.swaggerEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen3Constants.noDamageDefPlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen3Constants.noDamageSpePlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPEED;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen3Constants.noDamageSpAtkPlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_ATTACK;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen3Constants.noDamageSpDefPlusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_DEFENSE;
+                move.statChanges[0].stages = 2;
+                break;
+            case Gen3Constants.noDamageAtkMinusTwoEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = -2;
+                break;
+            case Gen3Constants.noDamageDefMinusTwoEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = -2;
+                break;
+            case Gen3Constants.noDamageSpeMinusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPEED;
+                move.statChanges[0].stages = -2;
+                break;
+            case Gen3Constants.noDamageSpDefMinusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_DEFENSE;
+                move.statChanges[0].stages = -2;
+                break;
+            case Gen3Constants.damageSpAtkMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_ATTACK;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.damageSpDefMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_DEFENSE;
+                move.statChanges[0].stages = -1;
+                break;
+            case Gen3Constants.damageUserAllPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.ALL;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen3Constants.chargeEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_DEFENSE;
+                move.statChanges[0].stages = 1;
+                break;
+            case Gen3Constants.damageUserAtkAndDefMinusOneEffect:
+            case Gen3Constants.noDamageAtkAndDefMinusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = -1;
+                move.statChanges[1].type = StatChangeType.DEFENSE;
+                move.statChanges[1].stages = -1;
+                break;
+            case Gen3Constants.damageUserSpAtkMinusTwoEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_ATTACK;
+                move.statChanges[0].stages = -2;
+                break;
+            case Gen3Constants.noDamageDefAndSpDefPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.DEFENSE;
+                move.statChanges[0].stages = 1;
+                move.statChanges[1].type = StatChangeType.SPECIAL_DEFENSE;
+                move.statChanges[1].stages = 1;
+                break;
+            case Gen3Constants.noDamageAtkAndDefPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = 1;
+                move.statChanges[1].type = StatChangeType.DEFENSE;
+                move.statChanges[1].stages = 1;
+                break;
+            case Gen3Constants.noDamageSpAtkAndSpDefPlusOneEffect:
+                move.statChanges[0].type = StatChangeType.SPECIAL_ATTACK;
+                move.statChanges[0].stages = 1;
+                move.statChanges[1].type = StatChangeType.SPECIAL_DEFENSE;
+                move.statChanges[1].stages = 1;
+                break;
+            case Gen3Constants.noDamageAtkAndSpePlusOneEffect:
+                move.statChanges[0].type = StatChangeType.ATTACK;
+                move.statChanges[0].stages = 1;
+                move.statChanges[1].type = StatChangeType.SPEED;
+                move.statChanges[1].stages = 1;
+                break;
+        }
+
+        if (move.statChangeMoveType == StatChangeMoveType.DAMAGE_TARGET || move.statChangeMoveType == StatChangeMoveType.DAMAGE_USER) {
+            for (int i = 0; i < move.statChanges.length; i++) {
+                if (move.statChanges[i].type != StatChangeType.NONE) {
+                    move.statChanges[i].percentChance = secondaryEffectChance;
+                    if (move.statChanges[i].percentChance == 0.0) {
+                        move.statChanges[i].percentChance = 100.0;
+                    }
+                }
+            }
+        }
+    }
+
+    private void loadStatusFromEffect(Move move, int secondaryEffectChance) {
+        if (move.number == Moves.bounce) {
+            // GF hardcoded this, so we have to as well
+            move.statusMoveType = StatusMoveType.DAMAGE;
+            move.statusType = StatusType.PARALYZE;
+            move.statusPercentChance = secondaryEffectChance;
+            return;
+        }
+
+        switch (move.effectIndex) {
+            case Gen3Constants.noDamageSleepEffect:
+            case Gen3Constants.toxicEffect:
+            case Gen3Constants.noDamageConfusionEffect:
+            case Gen3Constants.noDamagePoisonEffect:
+            case Gen3Constants.noDamageParalyzeEffect:
+            case Gen3Constants.noDamageBurnEffect:
+            case Gen3Constants.swaggerEffect:
+            case Gen3Constants.flatterEffect:
+            case Gen3Constants.teeterDanceEffect:
+                move.statusMoveType = StatusMoveType.NO_DAMAGE;
+                break;
+
+            case Gen3Constants.damagePoisonEffect:
+            case Gen3Constants.damageBurnEffect:
+            case Gen3Constants.damageFreezeEffect:
+            case Gen3Constants.damageParalyzeEffect:
+            case Gen3Constants.damageConfusionEffect:
+            case Gen3Constants.twineedleEffect:
+            case Gen3Constants.damageBurnAndThawUserEffect:
+            case Gen3Constants.thunderEffect:
+            case Gen3Constants.blazeKickEffect:
+            case Gen3Constants.poisonFangEffect:
+            case Gen3Constants.poisonTailEffect:
+                move.statusMoveType = StatusMoveType.DAMAGE;
+                break;
+
+            default:
+                // Move does not have a status effect
+                return;
+        }
+
+        switch (move.effectIndex) {
+            case Gen3Constants.noDamageSleepEffect:
+                move.statusType = StatusType.SLEEP;
+                break;
+            case Gen3Constants.damagePoisonEffect:
+            case Gen3Constants.noDamagePoisonEffect:
+            case Gen3Constants.twineedleEffect:
+            case Gen3Constants.poisonTailEffect:
+                move.statusType = StatusType.POISON;
+                break;
+            case Gen3Constants.damageBurnEffect:
+            case Gen3Constants.damageBurnAndThawUserEffect:
+            case Gen3Constants.noDamageBurnEffect:
+            case Gen3Constants.blazeKickEffect:
+                move.statusType = StatusType.BURN;
+                break;
+            case Gen3Constants.damageFreezeEffect:
+                move.statusType = StatusType.FREEZE;
+                break;
+            case Gen3Constants.damageParalyzeEffect:
+            case Gen3Constants.noDamageParalyzeEffect:
+            case Gen3Constants.thunderEffect:
+                move.statusType = StatusType.PARALYZE;
+                break;
+            case Gen3Constants.toxicEffect:
+            case Gen3Constants.poisonFangEffect:
+                move.statusType = StatusType.TOXIC_POISON;
+                break;
+            case Gen3Constants.noDamageConfusionEffect:
+            case Gen3Constants.damageConfusionEffect:
+            case Gen3Constants.swaggerEffect:
+            case Gen3Constants.flatterEffect:
+            case Gen3Constants.teeterDanceEffect:
+                move.statusType = StatusType.CONFUSION;
+                break;
+        }
+
+        if (move.statusMoveType == StatusMoveType.DAMAGE) {
+            move.statusPercentChance = secondaryEffectChance;
+            if (move.statusPercentChance == 0.0) {
+                move.statusPercentChance = 100.0;
+            }
+        }
+    }
+
+    private void loadMiscMoveInfoFromEffect(Move move, int secondaryEffectChance) {
+        switch (move.effectIndex) {
+            case Gen3Constants.increasedCritEffect:
+            case Gen3Constants.blazeKickEffect:
+            case Gen3Constants.poisonTailEffect:
+                move.criticalChance = CriticalChance.INCREASED;
+                break;
+
+            case Gen3Constants.futureSightAndDoomDesireEffect:
+            case Gen3Constants.spitUpEffect:
+                move.criticalChance = CriticalChance.NONE;
+
+            case Gen3Constants.flinchEffect:
+            case Gen3Constants.snoreEffect:
+            case Gen3Constants.twisterEffect:
+            case Gen3Constants.flinchWithMinimizeBonusEffect:
+            case Gen3Constants.fakeOutEffect:
+                move.flinchPercentChance = secondaryEffectChance;
+                break;
+
+            case Gen3Constants.damageAbsorbEffect:
+            case Gen3Constants.dreamEaterEffect:
+                move.absorbPercent = 50;
+                break;
+
+            case Gen3Constants.damageRecoil25PercentEffect:
+                move.recoilPercent = 25;
+                break;
+
+            case Gen3Constants.damageRecoil33PercentEffect:
+                move.recoilPercent = 33;
+                break;
+
+            case Gen3Constants.bindingEffect:
+            case Gen3Constants.trappingEffect:
+                move.isTrapMove = true;
+                break;
+
+            case Gen3Constants.razorWindEffect:
+            case Gen3Constants.skullBashEffect:
+            case Gen3Constants.solarbeamEffect:
+            case Gen3Constants.semiInvulnerableEffect:
+                move.isChargeMove = true;
+                break;
+
+            case Gen3Constants.rechargeEffect:
+                move.isRechargeMove = true;
+                break;
+
+            case Gen3Constants.skyAttackEffect:
+                move.criticalChance = CriticalChance.INCREASED;
+                move.flinchPercentChance = secondaryEffectChance;
+                move.isChargeMove = true;
+                break;
+        }
     }
 
     private void saveMoves() {
@@ -1419,6 +1816,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             int trOffset = baseOffset + i * entryLen;
             Trainer tr = new Trainer();
             tr.offset = trOffset;
+            tr.index = i;
             int trainerclass = rom[trOffset + 1] & 0xFF;
             tr.trainerclass = (rom[trOffset + 2] & 0x80) > 0 ? 1 : 0;
 
@@ -1463,10 +1861,9 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                     thisPoke.IVs = ((readWord(pointerToPokes + poke * 16) & 0xFF) * 31) / 255;
                     thisPoke.level = readWord(pointerToPokes + poke * 16 + 2);
                     thisPoke.pokemon = pokesInternal[readWord(pointerToPokes + poke * 16 + 4)];
-                    thisPoke.move1 = readWord(pointerToPokes + poke * 16 + 6);
-                    thisPoke.move2 = readWord(pointerToPokes + poke * 16 + 8);
-                    thisPoke.move3 = readWord(pointerToPokes + poke * 16 + 10);
-                    thisPoke.move4 = readWord(pointerToPokes + poke * 16 + 12);
+                    for (int move = 0; move < 4; move++) {
+                        thisPoke.moves[move] = readWord(pointerToPokes + poke * 16 + 6 + (move*2));
+                    }
                     tr.pokemon.add(thisPoke);
                 }
             } else if (pokeDataType == 3) {
@@ -1477,10 +1874,9 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                     thisPoke.level = readWord(pointerToPokes + poke * 16 + 2);
                     thisPoke.pokemon = pokesInternal[readWord(pointerToPokes + poke * 16 + 4)];
                     thisPoke.heldItem = readWord(pointerToPokes + poke * 16 + 6);
-                    thisPoke.move1 = readWord(pointerToPokes + poke * 16 + 8);
-                    thisPoke.move2 = readWord(pointerToPokes + poke * 16 + 10);
-                    thisPoke.move3 = readWord(pointerToPokes + poke * 16 + 12);
-                    thisPoke.move4 = readWord(pointerToPokes + poke * 16 + 14);
+                    for (int move = 0; move < 4; move++) {
+                        thisPoke.moves[move] = readWord(pointerToPokes + poke * 16 + 8 + (move*2));
+                    }
                     tr.pokemon.add(thisPoke);
                 }
             }
@@ -1588,10 +1984,10 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                             writeWord(pointerToPokes + poke * 16 + movesStart + m * 2, pokeMoves[m]);
                         }
                     } else {
-                        writeWord(pointerToPokes + poke * 16 + movesStart, tp.move1);
-                        writeWord(pointerToPokes + poke * 16 + movesStart + 2, tp.move2);
-                        writeWord(pointerToPokes + poke * 16 + movesStart + 4, tp.move3);
-                        writeWord(pointerToPokes + poke * 16 + movesStart + 6, tp.move4);
+                        writeWord(pointerToPokes + poke * 16 + movesStart, tp.moves[0]);
+                        writeWord(pointerToPokes + poke * 16 + movesStart + 2, tp.moves[1]);
+                        writeWord(pointerToPokes + poke * 16 + movesStart + 4, tp.moves[2]);
+                        writeWord(pointerToPokes + poke * 16 + movesStart + 6, tp.moves[3]);
                     }
                 }
             } else {

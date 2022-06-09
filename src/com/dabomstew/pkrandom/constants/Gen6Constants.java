@@ -192,6 +192,13 @@ public class Gen6Constants {
         }
     }
 
+    public static final int noDamageTargetTrappingEffect = 106, noDamageFieldTrappingEffect = 354,
+            damageAdjacentFoesTrappingEffect = 373;
+
+    public static final int noDamageStatusQuality = 1, noDamageStatChangeQuality = 2, damageStatusQuality = 4,
+            noDamageStatusAndStatChangeQuality = 5, damageTargetDebuffQuality = 6, damageUserBuffQuality = 7,
+            damageAbsorbQuality = 8;
+
     public static List<Integer> bannedMoves = Collections.singletonList(Moves.hyperspaceFury);
 
     public static final Type[] typeTable = constructTypeTable();
@@ -946,6 +953,7 @@ public class Gen6Constants {
         nonBadItemsXY.banRange(Items.redScarf, 5); // contest scarves
         nonBadItemsXY.banRange(Items.relicCopper,7); // relic items
         nonBadItemsXY.banRange(Items.richMulch,4); // more mulch
+        nonBadItemsXY.banRange(Items.shoalSalt, 6); // Shoal items and Shards; they serve no purpose in XY
 
         nonBadItemsORAS = allowedItemsORAS.copy();
 
