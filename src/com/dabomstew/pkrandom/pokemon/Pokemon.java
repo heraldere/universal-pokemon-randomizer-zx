@@ -284,9 +284,6 @@ public class Pokemon implements Comparable<Pokemon> {
 
             int diff = Math.max(upperBound - lowerBound, 1);
             res = random.nextInt(diff) + lowerBound;
-            if(res < 120) {
-                System.out.println(res);
-            }
         }
         return res;
     }
@@ -323,7 +320,7 @@ public class Pokemon implements Comparable<Pokemon> {
             minimum = 150;
             median = 450;
             high_value = 700;
-            z_score = 2.5758;// this z score corresponds to .5%.
+            z_score = 2.5758; // this z score corresponds to 0.5%.
         }
         double norm = random.nextGaussian();
 

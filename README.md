@@ -4,32 +4,33 @@ With significant contributions from darkeye, cleartonic
 
 Based on the Universal Pokemon Randomizer by Dabomstew
 
+Special Fork to randomize BSTs created by Heraldere
+
 # Info
 
-This fork was originally made to make some minor tweaks and fixes, but became a bit more ambitious since 2020. There are several new features and supported games (including 3DS games) compared to the original Universal Pokemon Randomizer.
+This personal fork was initially created to test out ideas relating to randomizing Base Stat Totals
+using the [Universal Pokemon Randomizer ZX](https://github.com/Ajarmar/universal-pokemon-randomizer-zx). 
 
-Have a look at the [release page](https://github.com/Ajarmar/universal-pokemon-randomizer-zx/releases) for changelogs and downloads.
+It has since become a bit of a dumping ground for any idea I want to play around with
+when it comes to randomized Pokemon games (usually in the context of [ironMON](https://gist.github.com/valiant-code/adb18d248fa0fae7da6b639e2ee8f9c1) challenge runs).
 
-# Contributing
+## What features?
 
-If you want to contribute something to the codebase, we'd recommend creating an issue for it first (using the`Contribution Idea` template). This way, we can discuss whether or not it's a good fit for the randomizer before you put in the work to implement it. This is just to save you time in the event that we don't think it's something we want to accept.
+- Added an option for Random Base Stat Totals in the randomization settings
+    - Base stat totals will be randomized on a Log-Normal curve, with parameters 
+    varying depending on what settings are selected.
+- Options relating to my [bootleg ironmon](https://pastebin.com/5ByxVbFF) ruleset
+- Anything else I think of in the future
 
-See [the Wiki Page](https://github.com/Ajarmar/universal-pokemon-randomizer-zx/wiki/Building-Universal-Pokemon-Randomizer-ZX) for setting up to build/test locally.
+## Will these features make it to the main ZX fork?
 
-### What is a good fit for the randomizer?
+Most of them are not a good fit for the Universal randomizer. I think a strong case can be made for
+randomized BSTs, but I haven't formally broached the topic with the devs on the main fork.
 
-In general, we try to make settings as universal as possible. This means that it preferably should work in as many games as possible, and also that it's something that many people will find useful. If the setting is very niche, it will mostly just bloat the GUI.
+For now, this is 
 
-If your idea is a change to an existing setting rather than a new setting, it needs to be well motivated.
+## Can you add [x specific feature]?
+Maybe? I'm not exactly taking requests, but if you have a general feature that is the right combination of
+easy / funny / fun, then I can try to be accommodating with a feature branch. 
+Fair warning: it may take a while for me to get around to it.
 
-# Feature requests
-
-We do not take feature requests.
-
-# Bug reports
-
-If you encounter something that seems to be a bug, submit an issue using the `Bug Report` issue template.
-
-# Other problems
-
-If you have problems using the randomizer, it could be because of some problem with Java or your operating system. **If you have problems with starting the randomizer specifically, [read this page first before creating an issue.](https://github.com/Ajarmar/universal-pokemon-randomizer-zx/wiki/About-Java)** If that page does not solve your problem, submit an issue using the `Need Help` issue template.
