@@ -71,8 +71,8 @@ public class Randomizer {
 
         int checkValue = 0;
 
-//        settings.setBossesGetStrongPokemon(true);
-//        settings.setGuaranteeStrongPokemon(true);
+        settings.setBossesGetStrongPokemon(true);
+        settings.setGuaranteeStrongPokemon(true);
 
         log.println("Randomizer Version: " + Version.VERSION_STRING);
         log.println("Random Seed: " + seed);

@@ -322,6 +322,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 .stream()
                 .filter(o -> o.evolutionsFrom.size() + o.megaEvolutionsTo.size() == 0 )
                 .collect(Collectors.toList());
+        System.out.println("There are " + fullyEvolvedPokemon.size() + " Fully Evolved Pokemon");
         if(settings.isBaseStatsFollowEvolutions()) {
             boss = fullyEvolvedPokemon.get(random.nextInt(fullyEvolvedPokemon.size()));
         } else {
@@ -510,7 +511,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 if (pkmn != null) {
                     pkmn.primaryType = randomType();
                     pkmn.secondaryType = null;
-                    if (this.random.nextDouble() < 0.5||settings.isDualTypeOnly()) {
+                    if (this.random.nextDouble() < 0.8 || settings.isDualTypeOnly()) {
                         pkmn.secondaryType = randomType();
                         while (pkmn.secondaryType == pkmn.primaryType) {
                             pkmn.secondaryType = randomType();
@@ -1989,6 +1990,8 @@ public abstract class AbstractRomHandler implements RomHandler {
                     for(int i = 0; i < t.pokemon.size(); i++) {
                         TrainerPokemon mon = mons.get(i);
                         mon.pokemon = pokesDescendingPower.get(i);
+                        mon.abilitySlot = getRandomAbilitySlot(mon.pokemon);
+                        mon.resetMoves=true;
                     }
                 }
                 finalBoss = false;
@@ -1998,6 +2001,8 @@ public abstract class AbstractRomHandler implements RomHandler {
                     mons.sort((p1, p2) -> p2.level - p1.level);
                     TrainerPokemon ace = mons.get(0);
                     ace.pokemon = pokesDescendingPower.get(bossMonIdx);
+                    ace.abilitySlot = getRandomAbilitySlot(ace.pokemon);
+                    ace.resetMoves=true;
                 }
                 bossMonIdx++;
             }

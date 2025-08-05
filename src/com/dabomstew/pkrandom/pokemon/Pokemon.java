@@ -169,11 +169,12 @@ public class Pokemon implements Comparable<Pokemon> {
     }
 
     private void distributeStatsLogNorm(Random random, int new_bst) {
-        double role_modifier = random.nextDouble();
-//        System.out.printf("%15s %4.3f\n", name, role_modifier);
-        double atkW = getStatRatio(random, role_modifier), defW = getStatRatio(random, role_modifier);
-        double spaW = getStatRatio(random, role_modifier), spdW = getStatRatio(random, role_modifier);
-        double speW = getStatRatio(random, role_modifier), hpW  = getStatRatio(random, role_modifier);
+        //TODO: Import entropy selection from Showdown Prototype
+        double entropy = random.nextDouble()*.85;
+//        System.out.printf("%15s %4.3f\n", name, entropy);
+        double atkW = getStatRatio(random, entropy), defW = getStatRatio(random, entropy);
+        double spaW = getStatRatio(random, entropy), spdW = getStatRatio(random, entropy);
+        double speW = getStatRatio(random, entropy), hpW  = getStatRatio(random, entropy);
 
         if(number == Species.shedinja){
             new_bst *= 5.0/6;
@@ -312,10 +313,11 @@ public class Pokemon implements Comparable<Pokemon> {
         double z_score;
 
         if(settings.isBaseStatsFollowEvolutions()) {
-            minimum = 300;
+            minimum = 400;
             median = 500;
             high_value = 700;
-            z_score = 2.1701; // this z score corresponds to 1.5%.
+//            z_score = 2.1701; // this z score corresponds to 1.5%.
+            z_score = 2.326; // this z score corresponds to 1%
         } else {
             minimum = 150;
             median = 450;
@@ -327,11 +329,12 @@ public class Pokemon implements Comparable<Pokemon> {
         return (int) Math.round(minimum + (median - minimum) * Math.pow((high_value - minimum + 0.0)/(median - minimum + 0.0), (norm / z_score)));
     }
 
-    private double getStatRatio(Random random, double roleModifier) {
-        double x = random.nextDouble();
-        double maxRatio = 15;
-        double offset = 1.0/(maxRatio - 1);
-        return (1.0/(2*Math.PI)) * (2*roleModifier - 1) * Math.sin(2*Math.PI*x) + x + offset;
+    private double getStatRatio(Random random, double entropy) {
+        double range = 2*(1-entropy);
+        return entropy + range*random.nextDouble();
+//        double maxRatio = 15;
+//        double offset = 1.0/(maxRatio - 1);
+//        return (1.0/(2*Math.PI)) * (2*entropy - 1) * Math.sin(2*Math.PI*x) + x + offset;
     }
 
     public void copyRandomizedStatsUpEvolution(Pokemon evolvesFrom) {
