@@ -4267,4 +4267,25 @@ public class Gen6RomHandler extends Abstract3DSRomHandler {
         }
         return items;
     }
+
+    @Override
+    protected ArrayList<ArrayList<Trainer>> getBossSet(List<Trainer> trainers) {
+        ArrayList<ArrayList<Trainer>> res = new ArrayList<>();
+
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("CHAMPION"))    .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE4"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE3"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE2"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE1"))      .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM8-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM7-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM6-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM5-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM4-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM3-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM2-LEADER")) .collect(Collectors.toList())));
+        res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM1-LEADER")) .collect(Collectors.toList())));
+
+        return res;
+    }
 }
