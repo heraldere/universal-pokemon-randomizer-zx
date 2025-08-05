@@ -25,13 +25,9 @@ package com.dabomstew.pkrandom.constants;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
-import com.dabomstew.pkrandom.pokemon.Stat;
-import com.dabomstew.pkrandom.pokemon.StatChange;
+import com.dabomstew.pkrandom.pokemon.*;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,7 +73,7 @@ public class GlobalConstants {
             Moves.armThrust, Moves.barrage, Moves.boneRush, Moves.bulletSeed, Moves.cometPunch, Moves.doubleSlap,
             Moves.furyAttack, Moves.furySwipes, Moves.icicleSpear, Moves.pinMissile, Moves.rockBlast, Moves.spikeCannon,
             Moves.tailSlap, Moves.waterShuriken);
-    
+
     public static final List<Integer> doubleHitMoves = Arrays.asList(
             Moves.bonemerang, Moves.doubleHit, Moves.doubleIronBash, Moves.doubleKick, Moves.dragonDarts,
             Moves.dualChop, Moves.gearGrind, Moves.twineedle);
@@ -177,6 +173,11 @@ public class GlobalConstants {
             case 8:
                 map.put(Species.aegislash,new StatChange(Stat.DEF.val | Stat.SPDEF.val,140,140));
                 break;
+            case 9:
+                map.put(Species.cresselia,new StatChange(Stat.DEF.val | Stat.SPDEF.val, 110,120));
+                map.put(Species.zacian,new StatChange(Stat.ATK.val, 120));
+                map.put(Species.zamazenta,new StatChange(Stat.ATK.val, 120));
+                break;
         }
         return map;
     }
@@ -217,9 +218,35 @@ public class GlobalConstants {
             Moves.magnitude, Moves.mirrorCoat, Moves.beatUp, Moves.spitUp, Moves.sheerCold
     );
 
+    public static final List<Integer> cannotBeObsoletedMoves = Arrays.asList(
+            Moves.returnTheMoveNotTheKeyword, Moves.frustration, Moves.endeavor, Moves.flail, Moves.reversal,
+            Moves.hiddenPower, Moves.storedPower, Moves.smellingSalts, Moves.fling, Moves.powerTrip, Moves.counter,
+            Moves.mirrorCoat, Moves.superFang
+    );
+
+    public static final List<Integer> cannotObsoleteMoves = Arrays.asList(
+            Moves.gearUp, Moves.magneticFlux, Moves.focusPunch, Moves.explosion, Moves.selfDestruct, Moves.geomancy,
+            Moves.venomDrench
+    );
+
+    public static final List<Integer> doubleBattleMoves = Arrays.asList(
+            Moves.followMe, Moves.helpingHand, Moves.ragePowder, Moves.afterYou, Moves.allySwitch, Moves.healPulse,
+            Moves.quash, Moves.ionDeluge, Moves.matBlock, Moves.aromaticMist, Moves.electrify, Moves.instruct,
+            Moves.spotlight, Moves.decorate, Moves.lifeDew, Moves.coaching
+    );
+
+    public static final List<Integer> uselessMoves = Arrays.asList(
+            Moves.splash, Moves.celebrate, Moves.holdHands, Moves.teleport,
+            Moves.reflectType       // the AI does not know how to use this move properly
+    );
+
+    public static final List<Integer> requiresOtherMove = Arrays.asList(
+            Moves.spitUp, Moves.swallow, Moves.dreamEater, Moves.nightmare
+    );
+
     public static final int MIN_DAMAGING_MOVE_POWER = 50;
 
-    public static final int HIGHEST_POKEMON_GEN = 8;
+    public static final int HIGHEST_POKEMON_GEN = 9;
 
     // Eevee has 8 potential evolutions
     public static final int LARGEST_NUMBER_OF_SPLIT_EVOS = 8;

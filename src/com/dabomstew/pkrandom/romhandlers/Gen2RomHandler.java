@@ -80,6 +80,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         private List<TMTextEntry> tmTexts = new ArrayList<>();
         private Map<String, Integer> entries = new HashMap<>();
         private Map<String, int[]> arrayEntries = new HashMap<>();
+        private Map<String, String> strings = new HashMap<>();
         private List<StaticPokemon> staticPokemon = new ArrayList<>();
 
         private int getValue(String key) {
@@ -87,6 +88,13 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                 entries.put(key, 0);
             }
             return entries.get(key);
+        }
+
+        private String getString(String key) {
+            if (!strings.containsKey(key)) {
+                strings.put(key, "");
+            }
+            return strings.get(key);
         }
     }
 
@@ -166,6 +174,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                                     boolean cTT = (current.getValue("CopyTMText") == 1);
                                     current.arrayEntries.putAll(otherEntry.arrayEntries);
                                     current.entries.putAll(otherEntry.entries);
+                                    current.strings.putAll(otherEntry.strings);
                                     if (cSP) {
                                         current.staticPokemon.addAll(otherEntry.staticPokemon);
                                         current.entries.put("StaticPokemonSupport", 1);
@@ -180,6 +189,8 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                                     current.extraTableFile = otherEntry.extraTableFile;
                                 }
                             }
+                        } else if (r[0].endsWith("Locator") || r[0].endsWith("Prefix")) {
+                            current.strings.put(r[0], r[1]);
                         } else {
                             if (r[1].startsWith("[") && r[1].endsWith("]")) {
                                 String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
@@ -280,6 +291,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     private boolean isVietCrystal;
     private ItemList allowedItems, nonBadItems;
     private long actualCRC32;
+    private boolean effectivenessUpdated;
 
     @Override
     public boolean detectRom(byte[] rom) {
@@ -317,10 +329,10 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         allowedItems = Gen2Constants.allowedItems.copy();
         nonBadItems = Gen2Constants.nonBadItems.copy();
         actualCRC32 = FileFunctions.getCRC32(rom);
-        // VietCrystal: exclude Burn Heal, Calcium, and Elixir
+        // VietCrystal: exclude Burn Heal, Calcium, TwistedSpoon, and Elixir
         // crashes your game if used, glitches out your inventory if carried
         if (isVietCrystal) {
-            allowedItems.banSingles(Gen2Items.burnHeal, Gen2Items.calcium, Gen2Items.elixer);
+            allowedItems.banSingles(Gen2Items.burnHeal, Gen2Items.calcium, Gen2Items.elixer, Gen2Items.twistedSpoon);
         }
     }
 
@@ -831,6 +843,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     @Override
     public Map<Integer, StatChange> getUpdatedPokemonStats(int generation) {
         return GlobalConstants.getStatChanges(generation);
+    }
+
+    @Override
+    public boolean supportsStarterHeldItems() {
+        return true;
     }
 
     @Override
@@ -1544,6 +1561,12 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
     }
 
     @Override
+    public List<Pokemon> bannedForWildEncounters() {
+        // Ban Unown because they don't show up unless you complete a puzzle in the Ruins of Alph.
+        return new ArrayList<>(Collections.singletonList(pokes[Species.unown]));
+    }
+
+    @Override
     public List<Pokemon> bannedForStaticPokemon() {
         return Collections.singletonList(pokes[Species.unown]); // Unown banned
     }
@@ -1779,6 +1802,24 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         return "Complete";
     }
 
+    private static int find(byte[] haystack, String hexString) {
+        if (hexString.length() % 2 != 0) {
+            return -3; // error
+        }
+        byte[] searchFor = new byte[hexString.length() / 2];
+        for (int i = 0; i < searchFor.length; i++) {
+            searchFor[i] = (byte) Integer.parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
+        }
+        List<Integer> found = RomFunctions.search(haystack, searchFor);
+        if (found.size() == 0) {
+            return -1; // not found
+        } else if (found.size() > 1) {
+            return -2; // not unique
+        } else {
+            return found.get(0);
+        }
+    }
+
     @Override
     public boolean hasTimeBasedEncounters() {
         return true; // All GSC do
@@ -1887,7 +1928,18 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
 
     @Override
     public void makeEvolutionsEasier(Settings settings) {
-        // No such thing
+        // Reduce the amount of happiness required to evolve.
+        int offset = find(rom, Gen2Constants.friendshipValueForEvoLocator);
+        if (offset > 0) {
+            // The thing we're looking at is actually one byte before what we
+            // want to change; this makes it work in both G/S and Crystal.
+            offset++;
+
+            // Amount of required happiness for all happiness evolutions.
+            if (rom[offset] == (byte)220) {
+                rom[offset] = (byte)160;
+            }
+        }
     }
 
     @Override
@@ -2201,6 +2253,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         }
     }
 
+    @Override
+    public boolean isEffectivenessUpdated() {
+        return effectivenessUpdated;
+    }
+
     private void randomizeCatchingTutorial() {
         if (romEntry.arrayEntries.containsKey("CatchingTutorialOffsets")) {
             // Pick a pokemon
@@ -2255,6 +2312,7 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         }
         logBlankLine();
         writeTypeEffectivenessTable(typeEffectivenessTable);
+        effectivenessUpdated = true;
     }
 
     private List<TypeRelationship> readTypeEffectivenessTable() {
@@ -2316,6 +2374,26 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
             }
             rom[currentOffset + 2] = effectivenessInternal;
             currentOffset += 3;
+        }
+    }
+
+    @Override
+    public void enableGuaranteedPokemonCatching() {
+        String prefix = romEntry.getString("GuaranteedCatchPrefix");
+        int offset = find(rom, prefix);
+        if (offset > 0) {
+            offset += prefix.length() / 2; // because it was a prefix
+
+            // The game guarantees that the catching tutorial always succeeds in catching by running
+            // the following code:
+            // ld a, [wBattleType]
+            // cp BATTLETYPE_TUTORIAL
+            // jp z, .catch_without_fail
+            // By making the jump here unconditional, we can ensure that catching always succeeds no
+            // matter the battle type. We check that the original condition is present just for safety.
+            if (rom[offset] == (byte)0xCA) {
+                rom[offset] = (byte)0xC3;
+            }
         }
     }
 

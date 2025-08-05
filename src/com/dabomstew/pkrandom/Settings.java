@@ -115,6 +115,7 @@ public class Settings {
     private boolean banNegativeAbilities;
     private boolean banBadAbilities;
     private boolean weighDuplicateAbilitiesTogether;
+    private boolean ensureTwoAbilities;
 
     public enum StartersMod {
         UNCHANGED, CUSTOM, COMPLETELY_RANDOM, RANDOM_WITH_TWO_EVOLUTIONS
@@ -206,6 +207,7 @@ public class Settings {
     private boolean highestLevelOnlyGetsItemsForTrainerPokemon;
     private boolean doubleBattleMode;
     private boolean shinyChance;
+    private boolean betterTrainerMovesets;
 
     public enum WildPokemonMod {
         UNCHANGED, RANDOM, AREA_MAPPING, GLOBAL_MAPPING
@@ -352,7 +354,7 @@ public class Settings {
         }
         int version = ByteBuffer.wrap(versionBytes).getInt();
         if (((version >> 24) & 0xFF) > 0 && ((version >> 24) & 0xFF) <= 172) {
-            throw new UnsupportedOperationException("The settings file is old and must be updated. Press Settings -> \"Update Pre-3.0.0 Settings File\" to update.");
+            throw new UnsupportedOperationException("The settings file is too old to update and cannot be loaded.");
         }
         if (version > VERSION) {
             throw new UnsupportedOperationException("Cannot read settings from a newer version of the randomizer.");
@@ -440,8 +442,7 @@ public class Settings {
         // 16 wild pokemon 2
         out.write(makeByteSelected(useMinimumCatchRate, blockWildLegendaries,
                 wildPokemonRestrictionMod == WildPokemonRestrictionMod.SIMILAR_STRENGTH, randomizeWildPokemonHeldItems,
-                banBadRandomWildPokemonHeldItems, false, false, balanceShakingGrass)
-                | ((minimumCatchRateLevel - 1) << 5));
+                banBadRandomWildPokemonHeldItems, false, false, balanceShakingGrass));
 
         // 17 static pokemon
         out.write(makeByteSelected(staticPokemonMod == StaticPokemonMod.UNCHANGED,
@@ -501,7 +502,8 @@ public class Settings {
                 trainersBlockLegendaries,
                 trainersBlockEarlyWonderGuard,
                 swapTrainerMegaEvos,
-                shinyChance));
+                shinyChance,
+                betterTrainerMovesets));
 
         // 28 - 31: pokemon restrictions
         try {
@@ -581,13 +583,14 @@ public class Settings {
         // 47 Static level modifier
         out.write((staticLevelModified ? 0x80 : 0) | (staticLevelModifier+50));
 
-        // 48 trainer pokemon held items.
+        // 48 trainer pokemon held items / pokemon ensure two abilities
         out.write(makeByteSelected(randomizeHeldItemsForBossTrainerPokemon,
                 randomizeHeldItemsForImportantTrainerPokemon,
                 randomizeHeldItemsForRegularTrainerPokemon,
                 consumableItemsOnlyForTrainerPokemon,
                 sensibleItemsOnlyForTrainerPokemon,
-                highestLevelOnlyGetsItemsForTrainerPokemon));
+                highestLevelOnlyGetsItemsForTrainerPokemon,
+                ensureTwoAbilities));
 
         // 49 pickup item randomization
         out.write(makeByteSelected(pickupItemsMod == PickupItemsMod.RANDOM,
@@ -598,8 +601,9 @@ public class Settings {
                 pickupItemsMod == PickupItemsMod.UNCHANGED, banBadRandomPickupItems,
                 banIrregularAltFormes, guaranteeStrongPokemon, bossesGetStrongPokemon);
         byte[] checks = out.toByteArray();
-        // 50 elite four unique pokemon (3 bits)
-        out.write(eliteFourUniquePokemonNumber);
+
+        // 50 elite four unique pokemon (3 bits) + catch rate level (3 bits)
+        out.write(eliteFourUniquePokemonNumber | ((minimumCatchRateLevel - 1) << 3));
 
         try {
             byte[] romName = this.romName.getBytes("US-ASCII");
@@ -722,8 +726,6 @@ public class Settings {
         settings.setBlockWildLegendaries(restoreState(data[16], 1));
         settings.setRandomizeWildPokemonHeldItems(restoreState(data[16], 3));
         settings.setBanBadRandomWildPokemonHeldItems(restoreState(data[16], 4));
-
-        settings.setMinimumCatchRateLevel(((data[16] & 0x60) >> 5) + 1);
         settings.setBalanceShakingGrass(restoreState(data[16], 7));
 
         settings.setStaticPokemonMod(restoreEnum(StaticPokemonMod.class, data[17], 0, // UNCHANGED
@@ -813,6 +815,7 @@ public class Settings {
         settings.setTrainersBlockEarlyWonderGuard(restoreState(data[27], 4));
         settings.setSwapTrainerMegaEvos(restoreState(data[27], 5));
         settings.setShinyChance(restoreState(data[27], 6));
+        settings.setBetterTrainerMovesets(restoreState(data[27], 7));
 
         // gen restrictions
         int genLimit = FileFunctions.readFullIntBigEndian(data, 28);
@@ -883,6 +886,7 @@ public class Settings {
         settings.setConsumableItemsOnlyForTrainers(restoreState(data[48], 3));
         settings.setSensibleItemsOnlyForTrainers(restoreState(data[48], 4));
         settings.setHighestLevelGetsItemsForTrainers(restoreState(data[48], 5));
+        settings.setEnsureTwoAbilities(restoreState(data[48], 6));
 
         settings.setPickupItemsMod(restoreEnum(PickupItemsMod.class, data[49],
                 1, // UNCHANGED
@@ -894,6 +898,7 @@ public class Settings {
         settings.setBossesGetStrongPokemon(restoreState(data[49], 5));
 
         settings.setEliteFourUniquePokemonNumber(data[50] & 0x7);
+        settings.setMinimumCatchRateLevel(((data[50] & 0x38) >> 3) + 1);
 
         int romNameLength = data[LENGTH_OF_SETTINGS_DATA] & 0xFF;
         String romName = new String(data, LENGTH_OF_SETTINGS_DATA + 1, romNameLength, "US-ASCII");
@@ -937,7 +942,12 @@ public class Settings {
         }
 
         // starters
-        List<Pokemon> romPokemon = rh.getPokemonInclFormes();
+        List<Pokemon> romPokemon;
+        if (rh.hasStarterAltFormes()) {
+            romPokemon = rh.getPokemonInclFormes();
+        } else {
+            romPokemon = rh.getPokemon();
+        }
         List<Pokemon> romStarters = rh.getStarters();
         for (int starter = 0; starter < 3; starter++) {
             if (this.customStarters[starter] < 0 || this.customStarters[starter] >= romPokemon.size()) {
@@ -979,7 +989,7 @@ public class Settings {
             this.setAllowWonderGuard(false);
         }
 
-        if (!(rh instanceof Gen2RomHandler || rh instanceof Gen3RomHandler)) {
+        if (!rh.supportsStarterHeldItems()) {
             // starter held items don't exist
             this.setRandomizeStartersHeldItems(false);
             this.setBanBadRandomStarterHeldItems(false);
@@ -1320,6 +1330,12 @@ public class Settings {
 
     public void setWeighDuplicateAbilitiesTogether(boolean weighDuplicateAbilitiesTogether) {
         this.weighDuplicateAbilitiesTogether = weighDuplicateAbilitiesTogether;
+    }
+
+    public boolean isEnsureTwoAbilities() { return ensureTwoAbilities; }
+
+    public void setEnsureTwoAbilities(boolean ensureTwoAbilities) {
+        this.ensureTwoAbilities = ensureTwoAbilities;
     }
 
     public StartersMod getStartersMod() {
@@ -1769,6 +1785,14 @@ public class Settings {
 
     public void setShinyChance(boolean shinyChance) {
         this.shinyChance = shinyChance;
+    }
+
+    public boolean isBetterTrainerMovesets() {
+        return betterTrainerMovesets;
+    }
+
+    public void setBetterTrainerMovesets(boolean betterTrainerMovesets) {
+        this.betterTrainerMovesets = betterTrainerMovesets;
     }
 
     public WildPokemonMod getWildPokemonMod() {

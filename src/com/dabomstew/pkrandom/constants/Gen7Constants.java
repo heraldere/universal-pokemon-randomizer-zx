@@ -317,6 +317,10 @@ public class Gen7Constants {
     public static final int zygardeAssemblyScriptFile = 45;
     public static final String zygardeAssemblyFormePrefix = "BC21CDE1B801CDE1", zygardeAssemblySpeciesPrefix = "FBEB4CD08DE20400A0E1F08FBDE8";
 
+    public static final String friendshipValueForEvoLocator = "DC0050E3F700002A";
+
+    public static final String perfectOddsBranchLocator = "050000BA000050E3";
+
     public static int getPokemonCount(int romType) {
         if (romType == Type_SM) {
             return pokemonCountSM;
