@@ -2264,11 +2264,14 @@ public abstract class AbstractRomHandler implements RomHandler {
     @Override
     public List<Move> getMoveSelectionPoolAtLevel(TrainerPokemon tp, boolean cyclicEvolutions) {
 
+        //Editing these for the sake of pokedex runs.
+        //You cannot make informed decisions about Tutor and Egg moves,
+        // and it doesn't make sense Joey on route 3 would have them.
         List<Move> moves = getMoves();
-        double eggMoveProbability = 0.1;
-        double preEvoMoveProbability = 0.5;
+        double eggMoveProbability = 0.0;
+        double preEvoMoveProbability = 0.25;
         double tmMoveProbability = 0.6;
-        double tutorMoveProbability = 0.6;
+        double tutorMoveProbability = 0.0;
 
         if (allLevelUpMoves == null) {
             allLevelUpMoves = getMovesLearnt();
@@ -2346,8 +2349,8 @@ public abstract class AbstractRomHandler implements RomHandler {
                     if (thisMove.power > 1 && tp.level * 3 > thisMove.power * thisMove.hitCount &&
                             this.random.nextDouble() < tutorMoveProbability) {
                         moveSelectionPoolAtLevel.add(thisMove);
-                    } else if ((thisMove.power <= 1 && this.random.nextInt(100) < tp.level) ||
-                            this.random.nextInt(200) < tp.level) {
+                    } else if ((thisMove.power <= 1 && this.random.nextInt(100) < tp.level) &&
+                            this.random.nextDouble() < tutorMoveProbability) {
                         moveSelectionPoolAtLevel.add(thisMove);
                     }
                 }
