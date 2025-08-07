@@ -303,6 +303,7 @@ public class NewRandomizerGUI {
     private JCheckBox pbsForceOneStrongPokemonCheckBox;
     private JCheckBox tpBossesGetStrongestPokemonCheckBox;
     private JRadioButton pbsRandomBaseStatTotalsRadioButton;
+    private JCheckBox tpGiveBossesStrongPokemonCheckBox;
 
     private static JFrame frame;
 
@@ -1571,7 +1572,7 @@ public class NewRandomizerGUI {
         tpConsumableItemsOnlyCheckBox.setSelected(settings.isConsumableItemsOnlyForTrainers());
         tpSensibleItemsCheckBox.setSelected(settings.isSensibleItemsOnlyForTrainers());
         tpHighestLevelGetsItemCheckBox.setSelected(settings.isHighestLevelGetsItemsForTrainers());
-        tpBossesGetStrongestPokemonCheckBox.setSelected(settings.isBossesGetStrongPokemon());
+        tpGiveBossesStrongPokemonCheckBox.setSelected(settings.isBossesGetStrongPokemon());
 
         tpRandomShinyTrainerPokemonCheckBox.setSelected(settings.isShinyChance());
         tpBetterMovesetsCheckBox.setSelected(settings.isBetterTrainerMovesets());
@@ -1719,6 +1720,7 @@ public class NewRandomizerGUI {
 
         settings.setBaseStatisticsMod(pbsUnchangedRadioButton.isSelected(), pbsShuffleRadioButton.isSelected(),
                 pbsRandomRadioButton.isSelected(), pbsRandomBaseStatTotalsRadioButton.isSelected());
+        settings.setGuaranteeStrongPokemon((pbsForceOneStrongPokemonCheckBox.isSelected()));
         settings.setBaseStatsFollowEvolutions(pbsFollowEvolutionsCheckBox.isSelected());
         settings.setUpdateBaseStats(pbsUpdateBaseStatsCheckBox.isSelected() && pbsUpdateBaseStatsCheckBox.isVisible());
         settings.setUpdateBaseStatsToGeneration(pbsUpdateComboBox.getSelectedIndex() + (Math.max(6,romHandler.generationOfPokemon()+1)));
@@ -1812,7 +1814,9 @@ public class NewRandomizerGUI {
         settings.setConsumableItemsOnlyForTrainers(tpConsumableItemsOnlyCheckBox.isVisible() && tpConsumableItemsOnlyCheckBox.isSelected());
         settings.setSensibleItemsOnlyForTrainers(tpSensibleItemsCheckBox.isVisible() && tpSensibleItemsCheckBox.isSelected());
         settings.setHighestLevelGetsItemsForTrainers(tpHighestLevelGetsItemCheckBox.isVisible() && tpHighestLevelGetsItemCheckBox.isSelected());
-        settings.setBossesGetStrongPokemon(tpBossesGetStrongestPokemonCheckBox.isSelected() /* && tpBossesGetStrongestPokemonCheckBox.isVisible()*/);
+        settings.setBossesGetStrongPokemon(tpGiveBossesStrongPokemonCheckBox.isVisible() && tpGiveBossesStrongPokemonCheckBox.isSelected());
+        System.out.println("2" + tpGiveBossesStrongPokemonCheckBox.isVisible());
+        System.out.println("2" + tpGiveBossesStrongPokemonCheckBox.isSelected());
 
         settings.setTotemPokemonMod(totpUnchangedRadioButton.isSelected(), totpRandomRadioButton.isSelected(), totpRandomSimilarStrengthRadioButton.isSelected());
         settings.setAllyPokemonMod(totpAllyUnchangedRadioButton.isSelected(), totpAllyRandomRadioButton.isSelected(), totpAllyRandomSimilarStrengthRadioButton.isSelected());
@@ -2660,6 +2664,9 @@ public class NewRandomizerGUI {
         miscBanBigMoneyManiacCheckBox.setVisible(true);
         miscBanBigMoneyManiacCheckBox.setEnabled(false);
         miscBanBigMoneyManiacCheckBox.setSelected(false);
+        tpGiveBossesStrongPokemonCheckBox.setVisible(true);
+        tpGiveBossesStrongPokemonCheckBox.setSelected(false);
+        tpGiveBossesStrongPokemonCheckBox.setEnabled(false);
         mtNoExistLabel.setVisible(false);
         mtNoneAvailableLabel.setVisible(false);
 
@@ -3148,8 +3155,11 @@ public class NewRandomizerGUI {
 
         if (pbsRandomBaseStatTotalsRadioButton.isSelected()) {
             pbsUpdateBaseStatsCheckBox.setEnabled(false);
+            pbsForceOneStrongPokemonCheckBox.setEnabled(true);
         } else {
             pbsUpdateBaseStatsCheckBox.setEnabled(romHandler.generationOfPokemon() < 8);
+            pbsForceOneStrongPokemonCheckBox.setSelected(false);
+            pbsForceOneStrongPokemonCheckBox.setEnabled(false);
         }
 
         if (pbsStandardizeEXPCurvesCheckBox.isSelected()) {
@@ -3375,7 +3385,10 @@ public class NewRandomizerGUI {
             tpHighestLevelGetsItemCheckBox.setSelected(false);
             tpEliteFourUniquePokemonCheckBox.setEnabled(false);
             tpEliteFourUniquePokemonCheckBox.setSelected(false);
+            tpGiveBossesStrongPokemonCheckBox.setEnabled(false);
+            tpGiveBossesStrongPokemonCheckBox.setSelected(false);
         } else {
+            tpGiveBossesStrongPokemonCheckBox.setEnabled(true);
             tpSimilarStrengthCheckBox.setEnabled(true);
             tpDontUseLegendariesCheckBox.setEnabled(true);
             tpNoEarlyWonderGuardCheckBox.setEnabled(true);

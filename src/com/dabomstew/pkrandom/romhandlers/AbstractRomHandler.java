@@ -2269,7 +2269,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         // and it doesn't make sense Joey on route 3 would have them.
         List<Move> moves = getMoves();
         double eggMoveProbability = 0.0;
-        double preEvoMoveProbability = 0.25;
+        double preEvoMoveProbability = 0.35;
         double tmMoveProbability = 0.6;
         double tutorMoveProbability = 0.0;
 
