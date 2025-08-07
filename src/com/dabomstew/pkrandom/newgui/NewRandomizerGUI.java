@@ -1815,8 +1815,6 @@ public class NewRandomizerGUI {
         settings.setSensibleItemsOnlyForTrainers(tpSensibleItemsCheckBox.isVisible() && tpSensibleItemsCheckBox.isSelected());
         settings.setHighestLevelGetsItemsForTrainers(tpHighestLevelGetsItemCheckBox.isVisible() && tpHighestLevelGetsItemCheckBox.isSelected());
         settings.setBossesGetStrongPokemon(tpGiveBossesStrongPokemonCheckBox.isVisible() && tpGiveBossesStrongPokemonCheckBox.isSelected());
-        System.out.println("2" + tpGiveBossesStrongPokemonCheckBox.isVisible());
-        System.out.println("2" + tpGiveBossesStrongPokemonCheckBox.isSelected());
 
         settings.setTotemPokemonMod(totpUnchangedRadioButton.isSelected(), totpRandomRadioButton.isSelected(), totpRandomSimilarStrengthRadioButton.isSelected());
         settings.setAllyPokemonMod(totpAllyUnchangedRadioButton.isSelected(), totpAllyRandomRadioButton.isSelected(), totpAllyRandomSimilarStrengthRadioButton.isSelected());

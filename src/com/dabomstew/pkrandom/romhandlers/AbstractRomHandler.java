@@ -322,7 +322,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 .stream()
                 .filter(o -> o.evolutionsFrom.size() + o.megaEvolutionsTo.size() == 0 )
                 .collect(Collectors.toList());
-        System.out.println("There are " + fullyEvolvedPokemon.size() + " Fully Evolved Pokemon");
+//        System.out.println("There are " + fullyEvolvedPokemon.size() + " Fully Evolved Pokemon");
         if(settings.isBaseStatsFollowEvolutions()) {
             boss = fullyEvolvedPokemon.get(random.nextInt(fullyEvolvedPokemon.size()));
         } else {

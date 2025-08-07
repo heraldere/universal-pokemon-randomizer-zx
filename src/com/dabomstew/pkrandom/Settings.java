@@ -82,7 +82,6 @@ public class Settings {
     }
 
     public void setBossesGetStrongPokemon(boolean bossesGetStrongPokemon) {
-        System.out.println("1" + bossesGetStrongPokemon);
         this.bossesGetStrongPokemon = bossesGetStrongPokemon;
     }
 
