@@ -4359,7 +4359,9 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
             res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM4-LEADER")) .collect(Collectors.toList())));
             res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM3-LEADER")) .collect(Collectors.toList())));
             res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM2-LEADER")) .collect(Collectors.toList())));
-            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("GYM1-LEADER")) .collect(Collectors.toList())));
+            res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && (t.tag.equals("GYM1-LEADER") //Cilan, Cress, Chili
+                                                                                 || t.tag.equals("GYM10-LEADER")
+                                                                                 || t.tag.equals("GYM9-LEADER"))).collect(Collectors.toList())));
         } else if (this.romEntry.romType == Gen5Constants.Type_BW2) {
             res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("CHAMPION"))    .collect(Collectors.toList())));
             res.add(new ArrayList<>(trainers.stream().filter(t -> t.tag != null && t.tag .equals("ELITE4"))      .collect(Collectors.toList())));

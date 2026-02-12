@@ -568,6 +568,14 @@ public abstract class AbstractRomHandler implements RomHandler {
 
         final List<Integer> bannedAbilities = this.getUselessAbilities();
 
+        //Grabbing this from Corvimae's branch.
+        // Imposter is ONLY available as a HIDDEN ability on ONE pokemon
+        // i.e., it shouldn't appear in any playthrough.
+        bannedAbilities.add(Abilities.imposter);
+        //And Innards Out does SO much more damage than aftermath,
+        // the game loses nothing if it isn't present.
+        bannedAbilities.add(Abilities.innardsOut);
+
         if (!allowWonderGuard) {
             bannedAbilities.add(Abilities.wonderGuard);
         }

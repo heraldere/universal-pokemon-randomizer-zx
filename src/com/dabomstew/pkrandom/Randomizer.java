@@ -42,12 +42,14 @@ public class Randomizer {
     private final RomHandler romHandler;
     private final ResourceBundle bundle;
     private final boolean saveAsDirectory;
+    private final boolean forceFullLog;
 
     public Randomizer(Settings settings, RomHandler romHandler, ResourceBundle bundle, boolean saveAsDirectory) {
         this.settings = settings;
         this.romHandler = romHandler;
         this.bundle = bundle;
         this.saveAsDirectory = saveAsDirectory;
+        this.forceFullLog = false;
     }
 
     public int randomize(final String filename) {
@@ -94,6 +96,7 @@ public class Randomizer {
         boolean tmsHmsCompatChanged = false;
         boolean tutorCompatChanged = false;
         boolean shopsChanged = false;
+
 
         // Limit Pokemon
         // 1. Set Pokemon pool according to limits (or lack thereof)
@@ -183,7 +186,7 @@ public class Randomizer {
             evolutionsChanged = true;
         }
 
-        if (evolutionsChanged) {
+        if (evolutionsChanged || forceFullLog) {
             logEvolutionChanges(log);
         }
 
@@ -212,7 +215,7 @@ public class Randomizer {
         }
 
         // Log Pokemon traits (stats, abilities, etc) if any have changed
-        if (pokemonTraitsChanged) {
+        if (pokemonTraitsChanged || forceFullLog) {
             logPokemonTraitChanges(log);
         } else {
             log.println("Pokemon base stats & type: unchanged" + NEWLINE);
@@ -312,7 +315,7 @@ public class Randomizer {
         }
 
         // Show the new movesets if applicable
-        if (movesetsChanged) {
+        if (movesetsChanged || forceFullLog) {
             logMovesetChanges(log);
         } else if (settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY) {
             log.println("Pokemon Movesets: Metronome Only." + NEWLINE);
@@ -328,7 +331,7 @@ public class Randomizer {
             tmMovesChanged = true;
         }
 
-        if (tmMovesChanged) {
+        if (tmMovesChanged || forceFullLog) {
             checkValue = logTMMoves(log, checkValue);
         } else if (settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY) {
             log.println("TM Moves: Metronome Only." + NEWLINE);
@@ -371,7 +374,7 @@ public class Randomizer {
         }
 
         // Copy TM/HM compatibility to cosmetic formes if it was changed at all, and log changes
-        if (tmsHmsCompatChanged) {
+        if (tmsHmsCompatChanged || forceFullLog) {
             romHandler.copyTMCompatibilityToCosmeticFormes();
             logTMHMCompatibility(log);
         }
@@ -518,7 +521,7 @@ public class Randomizer {
             }
         }
 
-        if (trainersChanged) {
+        if (trainersChanged || forceFullLog) {
             maybeLogTrainerChanges(log, originalTrainerNames, trainerNamesChanged, trainerMovesetsChanged);
         } else {
             log.println("Trainers: Unchanged." + NEWLINE);
@@ -603,7 +606,7 @@ public class Randomizer {
                 break;
         }
 
-        if (wildsChanged) {
+        if (wildsChanged || forceFullLog) {
             logWildPokemonChanges(log);
         } else {
             log.println("Wild Pokemon: Unchanged." + NEWLINE);
@@ -1176,7 +1179,7 @@ public class Randomizer {
             }
 
             String[] itemNames = romHandler.getItemNames();
-            if (logTrainerMovesets) {
+            if (logTrainerMovesets || forceFullLog) {
                 log.println();
                 for (TrainerPokemon tpk : t.pokemon) {
                     List<Move> moves = romHandler.getMoves();
