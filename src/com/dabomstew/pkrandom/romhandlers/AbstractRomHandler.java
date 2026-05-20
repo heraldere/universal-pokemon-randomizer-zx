@@ -3524,9 +3524,11 @@ public abstract class AbstractRomHandler implements RomHandler {
         boolean noBroken = settings.isBlockBrokenMovesetMoves();
         boolean forceStartingMoves = supportsFourStartingMoves() && settings.isStartWithGuaranteedMoves();
         int forceStartingMoveCount = settings.getGuaranteedMoveCount();
+        boolean forceLearnManyMoves = true; //TODO: settings.getManyLearnedMoves();
         double goodDamagingPercentage =
                 settings.isMovesetsForceGoodDamaging() ? settings.getMovesetsGoodDamagingPercent() / 100.0 : 0;
         boolean evolutionMovesForAll = settings.isEvolutionMovesForAll();
+        int forceEvoMoveCount = 2; //TODO: settings.getGuaranteedEvoMoveCount();
 
         // Get current sets
         Map<Integer, List<MoveLearnt>> movesets = this.getMovesLearnt();
@@ -3549,6 +3551,18 @@ public abstract class AbstractRomHandler implements RomHandler {
 
             double atkSpAtkRatio = pkmn.getAttackSpecialAttackRatio();
 
+            if (forceLearnManyMoves) {
+                int movesToLearn = 20;
+                moves.clear();
+                for (int i = 1; i <= movesToLearn; i++) {
+                    int lvl = 3*i;
+                    MoveLearnt fakeMove = new MoveLearnt();
+                    fakeMove.level = lvl;
+                    fakeMove.move = 0;
+                    moves.add(fakeMove);
+                }
+            }
+
             // 4 starting moves?
             if (forceStartingMoves) {
                 int lv1count = 0;
@@ -3567,8 +3581,15 @@ public abstract class AbstractRomHandler implements RomHandler {
                 }
             }
 
-            if (evolutionMovesForAll) {
-                if (moves.get(0).level != 0) {
+            if (evolutionMovesForAll) { // Notice, this adds evo moves
+                int evoMoveCount = 0;   // even to unevolved pokemon.
+                for (MoveLearnt ml : moves) { // Can't be bothered to fix here,
+                    if (ml.level == 0) {    // Will prevent display in Visualizer.
+                        evoMoveCount++;
+                    }
+                }
+                int evoMovesToAdd = forceEvoMoveCount - evoMoveCount;
+                for( int i = 0; i < evoMovesToAdd; i ++) {
                     MoveLearnt fakeEvoMove = new MoveLearnt();
                     fakeEvoMove.level = 0;
                     fakeEvoMove.move = 0;

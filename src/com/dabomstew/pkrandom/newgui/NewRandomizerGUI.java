@@ -304,6 +304,7 @@ public class NewRandomizerGUI {
     private JCheckBox tpBossesGetStrongestPokemonCheckBox;
     private JRadioButton pbsRandomBaseStatTotalsRadioButton;
     private JCheckBox tpGiveBossesStrongPokemonCheckBox;
+    private JCheckBox pmsGuaranteeManyMoves;
 
     private static JFrame frame;
 
