@@ -3524,11 +3524,11 @@ public abstract class AbstractRomHandler implements RomHandler {
         boolean noBroken = settings.isBlockBrokenMovesetMoves();
         boolean forceStartingMoves = supportsFourStartingMoves() && settings.isStartWithGuaranteedMoves();
         int forceStartingMoveCount = settings.getGuaranteedMoveCount();
-        boolean forceLearnManyMoves = true; //TODO: settings.getManyLearnedMoves();
+        boolean forceLearnManyMoves = settings.isGuaranteeManyMoves(); //TODO: settings.getManyLearnedMoves();
         double goodDamagingPercentage =
                 settings.isMovesetsForceGoodDamaging() ? settings.getMovesetsGoodDamagingPercent() / 100.0 : 0;
         boolean evolutionMovesForAll = settings.isEvolutionMovesForAll();
-        int forceEvoMoveCount = 2; //TODO: settings.getGuaranteedEvoMoveCount();
+        int forceEvoMoveCount = forceLearnManyMoves ? 2 : 1; //TODO: settings.getGuaranteedEvoMoveCount();
 
         // Get current sets
         Map<Integer, List<MoveLearnt>> movesets = this.getMovesLearnt();

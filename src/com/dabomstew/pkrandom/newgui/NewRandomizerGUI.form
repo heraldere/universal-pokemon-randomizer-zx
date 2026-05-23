@@ -1548,7 +1548,7 @@
                       <toolTipText resource-bundle="com/dabomstew/pkrandom/newgui/Bundle" key="GUI.pmsEvolutionMovesCheckBox.toolTipText"/>
                     </properties>
                   </component>
-                  <component id="712c8" class="javax.swing.JCheckBox" binding="pmsGuaranteeManyMoves">
+                  <component id="712c8" class="javax.swing.JCheckBox" binding="pmsGuaranteeManyMovesCheckBox">
                     <constraints>
                       <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>

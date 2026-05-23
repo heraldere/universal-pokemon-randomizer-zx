@@ -304,7 +304,7 @@ public class NewRandomizerGUI {
     private JCheckBox tpBossesGetStrongestPokemonCheckBox;
     private JRadioButton pbsRandomBaseStatTotalsRadioButton;
     private JCheckBox tpGiveBossesStrongPokemonCheckBox;
-    private JCheckBox pmsGuaranteeManyMoves;
+    private JCheckBox pmsGuaranteeManyMovesCheckBox;
 
     private static JFrame frame;
 
@@ -446,6 +446,7 @@ public class NewRandomizerGUI {
         pmsRandomCompletelyRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pmsMetronomeOnlyModeRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pmsGuaranteedLevel1MovesCheckBox.addActionListener(e -> enableOrDisableSubControls());
+        pmsGuaranteeManyMovesCheckBox.addActionListener(e -> enableOrDisableSubControls());
         pmsForceGoodDamagingCheckBox.addActionListener(e -> enableOrDisableSubControls());
         tpForceFullyEvolvedAtCheckBox.addActionListener(e -> enableOrDisableSubControls());
         tpPercentageLevelModifierCheckBox.addActionListener(e -> enableOrDisableSubControls());
@@ -1540,6 +1541,7 @@ public class NewRandomizerGUI {
         pmsMetronomeOnlyModeRadioButton.setSelected(settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY);
         pmsGuaranteedLevel1MovesCheckBox.setSelected(settings.isStartWithGuaranteedMoves());
         pmsGuaranteedLevel1MovesSlider.setValue(settings.getGuaranteedMoveCount());
+        pmsGuaranteeManyMovesCheckBox.setSelected(settings.isGuaranteeManyMoves());
         pmsReorderDamagingMovesCheckBox.setSelected(settings.isReorderDamagingMoves());
         pmsForceGoodDamagingCheckBox.setSelected(settings.isMovesetsForceGoodDamaging());
         pmsForceGoodDamagingSlider.setValue(settings.getMovesetsGoodDamagingPercent());
@@ -1780,6 +1782,7 @@ public class NewRandomizerGUI {
                 pmsRandomCompletelyRadioButton.isSelected(), pmsMetronomeOnlyModeRadioButton.isSelected());
         settings.setStartWithGuaranteedMoves(pmsGuaranteedLevel1MovesCheckBox.isSelected() && pmsGuaranteedLevel1MovesCheckBox.isVisible());
         settings.setGuaranteedMoveCount(pmsGuaranteedLevel1MovesSlider.getValue());
+        settings.setGuaranteeManyMoves(pmsGuaranteeManyMovesCheckBox.isSelected() && pmsGuaranteeManyMovesCheckBox.isVisible());
         settings.setReorderDamagingMoves(pmsReorderDamagingMovesCheckBox.isSelected());
 
         settings.setMovesetsForceGoodDamaging(pmsForceGoodDamagingCheckBox.isSelected());
@@ -2285,6 +2288,9 @@ public class NewRandomizerGUI {
         pmsGuaranteedLevel1MovesCheckBox.setVisible(true);
         pmsGuaranteedLevel1MovesCheckBox.setEnabled(false);
         pmsGuaranteedLevel1MovesCheckBox.setSelected(false);
+        pmsGuaranteeManyMovesCheckBox.setVisible(true);
+        pmsGuaranteeManyMovesCheckBox.setEnabled(false);
+        pmsGuaranteeManyMovesCheckBox.setSelected(false);
         pmsReorderDamagingMovesCheckBox.setVisible(true);
         pmsReorderDamagingMovesCheckBox.setEnabled(false);
         pmsReorderDamagingMovesCheckBox.setSelected(false);
@@ -2849,6 +2855,7 @@ public class NewRandomizerGUI {
 
             pmsGuaranteedLevel1MovesCheckBox.setVisible(romHandler.supportsFourStartingMoves());
             pmsGuaranteedLevel1MovesSlider.setVisible(romHandler.supportsFourStartingMoves());
+            pmsGuaranteeManyMovesCheckBox.setVisible(romHandler.supportsFourStartingMoves());
             pmsEvolutionMovesCheckBox.setVisible(pokemonGeneration >= 7);
 
             tpComboBox.setEnabled(true);
@@ -3319,6 +3326,8 @@ public class NewRandomizerGUI {
         if (pmsMetronomeOnlyModeRadioButton.isSelected() || pmsUnchangedRadioButton.isSelected()) {
             pmsGuaranteedLevel1MovesCheckBox.setEnabled(false);
             pmsGuaranteedLevel1MovesCheckBox.setSelected(false);
+            pmsGuaranteeManyMovesCheckBox.setEnabled(false);
+            pmsGuaranteeManyMovesCheckBox.setSelected(false);
             pmsForceGoodDamagingCheckBox.setEnabled(false);
             pmsForceGoodDamagingCheckBox.setSelected(false);
             pmsReorderDamagingMovesCheckBox.setEnabled(false);
@@ -3329,6 +3338,7 @@ public class NewRandomizerGUI {
             pmsEvolutionMovesCheckBox.setSelected(false);
         } else {
             pmsGuaranteedLevel1MovesCheckBox.setEnabled(true);
+            pmsGuaranteeManyMovesCheckBox.setEnabled(true);
             pmsForceGoodDamagingCheckBox.setEnabled(true);
             pmsReorderDamagingMovesCheckBox.setEnabled(true);
             pmsNoGameBreakingMovesCheckBox.setEnabled(true);
