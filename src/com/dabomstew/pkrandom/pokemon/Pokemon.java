@@ -157,9 +157,12 @@ public class Pokemon implements Comparable<Pokemon> {
     }
 
     public void randomizeStatsLogNorm(Random random, Settings settings) {
-        // Get a new bst, and a "role" (specialist vs generalist)
         int new_bst = pickNewBSTLogNorm(random, settings);
-        distributeStatsLogNorm(random, new_bst);
+        if(this.megaEvolutionsTo.size() > 0) {
+            distributeStatsLogMega(random, new_bst);
+        } else {
+            distributeStatsLogNorm(random, new_bst);
+        }
     }
 
     public void randomizeStatsBoss(Random random, Settings settings) {
@@ -169,7 +172,6 @@ public class Pokemon implements Comparable<Pokemon> {
     }
 
     private void distributeStatsLogNorm(Random random, int new_bst) {
-        //TODO: Import entropy selection from Showdown Prototype
         double entropy = random.nextDouble()*.85;
 //        System.out.printf("%15s %4.3f\n", name, entropy);
         double atkW = getStatRatio(random, entropy), defW = getStatRatio(random, entropy);
@@ -241,6 +243,40 @@ public class Pokemon implements Comparable<Pokemon> {
                 loops++;
             }
         }
+    }
+
+    private void distributeStatsLogMega(Random random, int stat_total) {
+        Pokemon nonMega = megaEvolutionsTo.get(0).from;
+        int stat_diff = stat_total - nonMega.bst();
+
+        //Megas always have the same hp as their non-mega form
+        hp = nonMega.hp;
+
+        int previousDistributionSum = nonMega.attack + nonMega.defense
+                                    + nonMega.spatk + nonMega.spdef
+                                    + nonMega.speed;
+
+        int[] statArr = {nonMega.attack, nonMega.defense, nonMega.spatk, nonMega.spdef, nonMega.speed};
+
+        // The idea here is that higher non-mega stats will tend to have higher weights
+        int atkW = random.nextInt(nonMega.attack);
+        int defW = random.nextInt(nonMega.defense);
+        int spaW = random.nextInt(nonMega.spatk);
+        int spdW = random.nextInt(nonMega.spdef);
+        int speW = random.nextInt(nonMega.speed);
+
+        double totW = atkW + defW + spaW + spdW + speW;
+
+        double[] weightArr = {atkW/totW, defW/totW, spaW/totW, spdW/totW, speW/totW};
+
+
+        attack = Math.max(10, Math.min(255, (int) Math.round( nonMega.attack + stat_diff * atkW/totW)));
+        defense = Math.max(10, Math.min(255, (int) Math.round( nonMega.defense + stat_diff * defW/totW)));
+        spatk = Math.max(10, Math.min(255, (int) Math.round(nonMega.spatk + stat_diff * spaW/totW)));
+        spdef = Math.max(10, Math.min(255, (int) Math.round(nonMega.spdef + stat_diff * spdW/totW)));
+        speed = Math.max(10, Math.min(255, (int) Math.round(nonMega.speed + stat_diff * speW/totW)));
+
+        //TODO: 20-30% chance to decrease the lowest stat by 10-20 and distribute among the rest
     }
 
     /**
