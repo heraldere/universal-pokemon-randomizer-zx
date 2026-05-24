@@ -25,11 +25,17 @@ package com.dabomstew.pkrandom.romhandlers;
 /*----------------------------------------------------------------------------*/
 
 import com.dabomstew.pkrandom.FileFunctions;
+import com.dabomstew.pkrandom.Settings;
+import com.dabomstew.pkrandom.constants.Gen6Constants;
+import com.dabomstew.pkrandom.constants.Gen7Constants;
 import com.dabomstew.pkrandom.ctr.GARCArchive;
 import com.dabomstew.pkrandom.ctr.NCCH;
 import com.dabomstew.pkrandom.exceptions.CannotWriteToLocationException;
 import com.dabomstew.pkrandom.exceptions.EncryptedROMException;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
+import com.dabomstew.pkrandom.pokemon.Pokemon;
+import com.dabomstew.pkrandom.pokemon.Trainer;
+import com.dabomstew.pkrandom.pokemon.TrainerPokemon;
 import com.dabomstew.pkrandom.pokemon.Type;
 
 import java.io.FileInputStream;
@@ -37,6 +43,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
@@ -345,6 +352,34 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
                 return 325;
             case FAIRY:
                 return isGen7 ? 555 : 546;
+        }
+    }
+
+    @Override
+    public void randomizeTrainerHeldItems(Settings settings) {
+        super.randomizeTrainerHeldItems(settings);
+        if(settings.isTrainersCanHaveMegas()) {
+            int gen = this.generationOfPokemon();
+            Map<Integer, List<Integer>> megastoneMap;
+            if(gen == 6) {
+                megastoneMap = this.isORAS ? Gen6Constants.speciesToMegaStoneORAS : Gen6Constants.speciesToMegaStoneXY;
+            } else if (gen == 7) {
+                megastoneMap = Gen6Constants.speciesToMegaStoneORAS;
+            } else {
+                return;
+            }
+
+            List<Trainer> currentTrainers = this.getTrainers();
+            for(Trainer t : currentTrainers) {
+                for(TrainerPokemon tp : t.pokemon) {
+                    Pokemon species = tp.pokemon;
+                    if(megastoneMap.containsKey(species.number)) {
+                        List<Integer> stones = megastoneMap.get(species.number);
+                        tp.heldItem = stones.get(random.nextInt(stones.size()));
+                    }
+                }
+            }
+            this.setTrainers(currentTrainers, false);
         }
     }
 }

@@ -69,6 +69,7 @@ public class Settings {
     private boolean guaranteeStrongPokemon;
     private boolean bossesGetStrongPokemon;
     private boolean guaranteeManyMoves;
+    private boolean trainersCanHaveMegas = true;
 
     public boolean isGuaranteeStrongPokemon() {
         return guaranteeStrongPokemon;
@@ -92,6 +93,14 @@ public class Settings {
 
     public void setGuaranteeManyMoves(boolean guaranteeManyMoves) {
         this.guaranteeManyMoves = guaranteeManyMoves;
+    }
+
+    public boolean isTrainersCanHaveMegas() {
+        return trainersCanHaveMegas;
+    }
+
+    public void setTrainersCanHaveMegas(boolean trainersCanHaveMegas) {
+        this.trainersCanHaveMegas = trainersCanHaveMegas;
     }
 
     public enum BaseStatisticsMod {
