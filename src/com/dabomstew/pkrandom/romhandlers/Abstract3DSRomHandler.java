@@ -27,7 +27,6 @@ package com.dabomstew.pkrandom.romhandlers;
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.Settings;
 import com.dabomstew.pkrandom.constants.Gen6Constants;
-import com.dabomstew.pkrandom.constants.Gen7Constants;
 import com.dabomstew.pkrandom.ctr.GARCArchive;
 import com.dabomstew.pkrandom.ctr.NCCH;
 import com.dabomstew.pkrandom.exceptions.CannotWriteToLocationException;
@@ -376,6 +375,8 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
                     if(megastoneMap.containsKey(species.number)) {
                         List<Integer> stones = megastoneMap.get(species.number);
                         tp.heldItem = stones.get(random.nextInt(stones.size()));
+                        t.setPokemonHaveItems(true);
+                        break;
                     }
                 }
             }
