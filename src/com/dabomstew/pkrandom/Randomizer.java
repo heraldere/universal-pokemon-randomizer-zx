@@ -503,6 +503,11 @@ public class Randomizer {
             trainersChanged = true;
         }
 
+        if (settings.isTrainersCanHaveMegas()) {
+            romHandler.addTrainerMegaEvolutionItems(settings);
+            trainersChanged = true;
+        }
+
         List<String> originalTrainerNames = getTrainerNames();
         boolean trainerNamesChanged = false;
 

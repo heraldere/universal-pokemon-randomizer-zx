@@ -29,7 +29,6 @@ package com.dabomstew.pkrandom.romhandlers;
 /*----------------------------------------------------------------------------*/
 
 import java.io.PrintStream;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -7687,5 +7686,10 @@ public abstract class AbstractRomHandler implements RomHandler {
     @Override
     public void setPickupItems(List<PickupItem> pickupItems) {
         // do nothing
+    }
+
+    @Override
+    public void addTrainerMegaEvolutionItems(Settings settings) {
+        // Only valid in 3DS generations
     }
 }

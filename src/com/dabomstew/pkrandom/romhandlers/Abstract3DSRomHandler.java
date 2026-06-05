@@ -44,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
 
@@ -355,8 +356,7 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
     }
 
     @Override
-    public void randomizeTrainerHeldItems(Settings settings) {
-        super.randomizeTrainerHeldItems(settings);
+    public void addTrainerMegaEvolutionItems(Settings settings) {
         if(settings.isTrainersCanHaveMegas()) {
             int gen = this.generationOfPokemon();
             Map<Integer, List<Integer>> megastoneMap;
@@ -370,13 +370,22 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
 
             List<Trainer> currentTrainers = this.getTrainers();
             for(Trainer t : currentTrainers) {
-                for(TrainerPokemon tp : t.pokemon) {
+                // If a trainer has multiple mega-evolvable pokemon, the highest level should be prioritized a bit
+                List<TrainerPokemon> sortedPokemon = t.pokemon.stream()
+                                                              .sorted((a,b) -> b.level - a.level)
+                                                              .collect(Collectors.toList());
+                for(TrainerPokemon tp : sortedPokemon) {
                     Pokemon species = tp.pokemon;
                     if(megastoneMap.containsKey(species.number)) {
-                        List<Integer> stones = megastoneMap.get(species.number);
-                        tp.heldItem = stones.get(random.nextInt(stones.size()));
-                        t.setPokemonHaveItems(true);
-                        break;
+                        int chance = random.nextInt(100);
+                        if((t.isBoss())
+                        || (chance < tp.level)) {
+                            List<Integer> stones = megastoneMap.get(species.number);
+                            tp.heldItem = stones.get(random.nextInt(stones.size()));
+                            t.setPokemonHaveItems(true);
+                            break; //A trainer should only have one Mega Pokemon
+                        }
+
                     }
                 }
             }

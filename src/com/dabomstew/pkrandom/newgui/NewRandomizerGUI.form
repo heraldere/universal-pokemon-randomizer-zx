@@ -1667,7 +1667,7 @@
                   </component>
                   <component id="670de" class="javax.swing.JSlider" binding="tpPercentageLevelModifierSlider" default-binding="true">
                     <constraints>
-                      <grid row="9" column="6" row-span="3" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="10" column="6" row-span="3" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1756,7 +1756,7 @@
                   </component>
                   <component id="34a10" class="javax.swing.JCheckBox" binding="tpRandomShinyTrainerPokemonCheckBox">
                     <constraints>
-                      <grid row="9" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="10" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1767,13 +1767,13 @@
                   </component>
                   <vspacer id="2342a">
                     <constraints>
-                      <grid row="13" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <grid row="14" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                   </vspacer>
                   <component id="28e4c" class="javax.swing.JCheckBox" binding="tpEliteFourUniquePokemonCheckBox">
                     <constraints>
-                      <grid row="12" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="13" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1784,7 +1784,7 @@
                   </component>
                   <component id="727d5" class="javax.swing.JSpinner" binding="tpEliteFourUniquePokemonSpinner">
                     <constraints>
-                      <grid row="12" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="13" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1885,7 +1885,7 @@
                   </component>
                   <component id="dad16" class="javax.swing.JCheckBox" binding="tpBossTrainersItemsCheckBox">
                     <constraints>
-                      <grid row="11" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="12" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1896,7 +1896,7 @@
                   </component>
                   <component id="d7d93" class="javax.swing.JCheckBox" binding="tpImportantTrainersItemsCheckBox">
                     <constraints>
-                      <grid row="11" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="12" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1907,7 +1907,7 @@
                   </component>
                   <component id="7fddd" class="javax.swing.JCheckBox" binding="tpRegularTrainersItemsCheckBox">
                     <constraints>
-                      <grid row="11" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="12" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1918,7 +1918,7 @@
                   </component>
                   <component id="31e9a" class="javax.swing.JCheckBox" binding="tpConsumableItemsOnlyCheckBox">
                     <constraints>
-                      <grid row="12" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="13" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1929,7 +1929,7 @@
                   </component>
                   <component id="79d6a" class="javax.swing.JCheckBox" binding="tpSensibleItemsCheckBox">
                     <constraints>
-                      <grid row="12" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="13" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1940,7 +1940,7 @@
                   </component>
                   <component id="f3c52" class="javax.swing.JCheckBox" binding="tpHighestLevelGetsItemCheckBox">
                     <constraints>
-                      <grid row="12" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="13" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1951,7 +1951,7 @@
                   </component>
                   <component id="46366" class="javax.swing.JCheckBox" binding="tpBossesGetStrongestPokemonCheckBox">
                     <constraints>
-                      <grid row="11" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="12" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1974,7 +1974,7 @@
                   </component>
                   <component id="25b58" class="javax.swing.JLabel" binding="tpHeldItemsLabel">
                     <constraints>
-                      <grid row="10" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="11" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
@@ -1987,8 +1987,21 @@
                       <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
+                      <enabled value="false"/>
                       <text value="Give Bosses Strong Pokemon"/>
                       <toolTipText value="&lt;html&gt;Replaces the Highest Level Pokemon on each Gym/E4/Champion's team with a high BST Pokemon &#10;(Note, this does nothing for Gen 7 currently)&#10;(heraldere's Challenge)"/>
+                    </properties>
+                  </component>
+                  <component id="7b2df" class="javax.swing.JCheckBox" binding="tpTrainersCanHaveMegas">
+                    <constraints>
+                      <grid row="9" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <enabled value="false"/>
+                      <selected value="false"/>
+                      <text value="Give Traines Mega Stones"/>
+                      <toolTipText value="&lt;html&gt;If a trainer's Pokemon has a Mega form, adds a chance that the Pokemon will be holding the proper Mega Stone &lt;br/&gt;Higher level Pokemon have a higher chance of holding a Stone&lt;br/&gt;(Bosses will always have Mega Stones if available)&lt;br/&gt;Does not make sense with &quot;Swap Mega Evolvables&quot; option"/>
                     </properties>
                   </component>
                 </children>

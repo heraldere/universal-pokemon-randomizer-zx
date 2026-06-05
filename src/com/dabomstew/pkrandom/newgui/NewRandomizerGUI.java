@@ -305,6 +305,7 @@ public class NewRandomizerGUI {
     private JRadioButton pbsRandomBaseStatTotalsRadioButton;
     private JCheckBox tpGiveBossesStrongPokemonCheckBox;
     private JCheckBox pmsGuaranteeManyMovesCheckBox;
+    private JCheckBox tpTrainersCanHaveMegas;
 
     private static JFrame frame;
 
@@ -523,6 +524,8 @@ public class NewRandomizerGUI {
                                 isTrainerSetting(TRAINER_TYPE_THEMED_ELITE4_GYMS))) {
                     tpSwapMegaEvosCheckBox.setEnabled(false);
                     tpSwapMegaEvosCheckBox.setSelected(false);
+                    tpTrainersCanHaveMegas.setEnabled(false);
+                    tpTrainersCanHaveMegas.setSelected(false);
                 }
             }
         });
@@ -1562,6 +1565,7 @@ public class NewRandomizerGUI {
         tpEliteFourUniquePokemonSpinner.setValue(settings.getEliteFourUniquePokemonNumber() > 0 ? settings.getEliteFourUniquePokemonNumber() : 1);
         tpAllowAlternateFormesCheckBox.setSelected(settings.isAllowTrainerAlternateFormes());
         tpSwapMegaEvosCheckBox.setSelected(settings.isSwapTrainerMegaEvos());
+        tpTrainersCanHaveMegas.setSelected(settings.isTrainersCanHaveMegas());
         tpDoubleBattleModeCheckBox.setSelected(settings.isDoubleBattleMode());
         tpBossTrainersCheckBox.setSelected(settings.getAdditionalBossTrainerPokemon() > 0);
         tpBossTrainersSpinner.setValue(settings.getAdditionalBossTrainerPokemon() > 0 ? settings.getAdditionalBossTrainerPokemon() : 1);
@@ -1806,6 +1810,7 @@ public class NewRandomizerGUI {
         settings.setEliteFourUniquePokemonNumber(tpEliteFourUniquePokemonCheckBox.isVisible() && tpEliteFourUniquePokemonCheckBox.isSelected() ? (int)tpEliteFourUniquePokemonSpinner.getValue() : 0);
         settings.setAllowTrainerAlternateFormes(tpAllowAlternateFormesCheckBox.isSelected() && tpAllowAlternateFormesCheckBox.isVisible());
         settings.setSwapTrainerMegaEvos(tpSwapMegaEvosCheckBox.isSelected() && tpSwapMegaEvosCheckBox.isVisible());
+        settings.setTrainersCanHaveMegas(tpTrainersCanHaveMegas.isSelected() && tpTrainersCanHaveMegas.isVisible());
         settings.setDoubleBattleMode(tpDoubleBattleModeCheckBox.isVisible() && tpDoubleBattleModeCheckBox.isSelected());
         settings.setAdditionalBossTrainerPokemon(tpBossTrainersCheckBox.isVisible() && tpBossTrainersCheckBox.isSelected() ? (int)tpBossTrainersSpinner.getValue() : 0);
         settings.setAdditionalImportantTrainerPokemon(tpImportantTrainersCheckBox.isVisible() && tpImportantTrainersCheckBox.isSelected() ? (int)tpImportantTrainersSpinner.getValue() : 0);
@@ -2359,6 +2364,9 @@ public class NewRandomizerGUI {
         tpSwapMegaEvosCheckBox.setVisible(true);
         tpSwapMegaEvosCheckBox.setEnabled(false);
         tpSwapMegaEvosCheckBox.setSelected(false);
+        tpTrainersCanHaveMegas.setVisible(true);
+        tpTrainersCanHaveMegas.setEnabled(false);
+        tpTrainersCanHaveMegas.setSelected(false);
         tpDoubleBattleModeCheckBox.setVisible(true);
         tpDoubleBattleModeCheckBox.setEnabled(false);
         tpDoubleBattleModeCheckBox.setSelected(false);
@@ -2863,6 +2871,7 @@ public class NewRandomizerGUI {
             tpForceFullyEvolvedAtCheckBox.setEnabled(true);
             tpPercentageLevelModifierCheckBox.setEnabled(true);
             tpSwapMegaEvosCheckBox.setVisible(romHandler.hasMegaEvolutions());
+            tpTrainersCanHaveMegas.setVisible(romHandler.hasMegaEvolutions());
             tpDoubleBattleModeCheckBox.setVisible(pokemonGeneration >= 3);
 
             boolean additionalPokemonAvailable = pokemonGeneration >= 3;
@@ -3370,6 +3379,8 @@ public class NewRandomizerGUI {
             tpAllowAlternateFormesCheckBox.setSelected(false);
             tpSwapMegaEvosCheckBox.setEnabled(false);
             tpSwapMegaEvosCheckBox.setSelected(false);
+            tpTrainersCanHaveMegas.setEnabled(false);
+            tpTrainersCanHaveMegas.setSelected(false);
             tpRandomShinyTrainerPokemonCheckBox.setEnabled(false);
             tpRandomShinyTrainerPokemonCheckBox.setSelected(false);
             tpDoubleBattleModeCheckBox.setEnabled(false);
@@ -3409,6 +3420,7 @@ public class NewRandomizerGUI {
                 tpSwapMegaEvosCheckBox.setEnabled(false);
                 tpSwapMegaEvosCheckBox.setSelected(false);
             }
+            tpTrainersCanHaveMegas.setEnabled(true);
             tpRandomShinyTrainerPokemonCheckBox.setEnabled(true);
             tpDoubleBattleModeCheckBox.setEnabled(tpDoubleBattleModeCheckBox.isVisible());
             tpBossTrainersCheckBox.setEnabled(tpBossTrainersCheckBox.isVisible());

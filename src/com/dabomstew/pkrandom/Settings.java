@@ -69,7 +69,7 @@ public class Settings {
     private boolean guaranteeStrongPokemon;
     private boolean bossesGetStrongPokemon;
     private boolean guaranteeManyMoves;
-    private boolean trainersCanHaveMegas = true;
+    private boolean trainersCanHaveMegas;
 
     public boolean isGuaranteeStrongPokemon() {
         return guaranteeStrongPokemon;
@@ -624,7 +624,7 @@ public class Settings {
         out.write(eliteFourUniquePokemonNumber | ((minimumCatchRateLevel - 1) << 3));
 
         // 51 HAL rando extras: Many move guarantee
-        out.write(makeByteSelected(guaranteeManyMoves));
+        out.write(makeByteSelected(guaranteeManyMoves, trainersCanHaveMegas));
 
         try {
             byte[] romName = this.romName.getBytes("US-ASCII");
@@ -923,6 +923,7 @@ public class Settings {
 
         //Hal settings
         settings.setGuaranteeManyMoves(restoreState(data[51], 0));
+        settings.setTrainersCanHaveMegas(restoreState(data[51], 1));
 
         int romNameLength = data[LENGTH_OF_SETTINGS_DATA] & 0xFF;
         String romName = new String(data, LENGTH_OF_SETTINGS_DATA + 1, romNameLength, "US-ASCII");
