@@ -70,6 +70,7 @@ public class Settings {
     private boolean bossesGetStrongPokemon;
     private boolean guaranteeManyMoves;
     private boolean trainersCanHaveMegas;
+    private boolean guaranteeMegaStones;
 
     public boolean isGuaranteeStrongPokemon() {
         return guaranteeStrongPokemon;
@@ -101,6 +102,14 @@ public class Settings {
 
     public void setTrainersCanHaveMegas(boolean trainersCanHaveMegas) {
         this.trainersCanHaveMegas = trainersCanHaveMegas;
+    }
+
+    public boolean isGuaranteeMegaStones() {
+        return guaranteeMegaStones;
+    }
+
+    public void setGuaranteeMegaStones(boolean guaranteeMegaStones) {
+        this.guaranteeMegaStones = guaranteeMegaStones;
     }
 
     public enum BaseStatisticsMod {
@@ -624,7 +633,7 @@ public class Settings {
         out.write(eliteFourUniquePokemonNumber | ((minimumCatchRateLevel - 1) << 3));
 
         // 51 HAL rando extras: Many move guarantee
-        out.write(makeByteSelected(guaranteeManyMoves, trainersCanHaveMegas));
+        out.write(makeByteSelected(guaranteeManyMoves, trainersCanHaveMegas, guaranteeMegaStones));
 
         try {
             byte[] romName = this.romName.getBytes("US-ASCII");
@@ -924,6 +933,7 @@ public class Settings {
         //Hal settings
         settings.setGuaranteeManyMoves(restoreState(data[51], 0));
         settings.setTrainersCanHaveMegas(restoreState(data[51], 1));
+        settings.setGuaranteeMegaStones(restoreState(data[51], 2));
 
         int romNameLength = data[LENGTH_OF_SETTINGS_DATA] & 0xFF;
         String romName = new String(data, LENGTH_OF_SETTINGS_DATA + 1, romNameLength, "US-ASCII");

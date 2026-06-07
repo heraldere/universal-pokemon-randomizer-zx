@@ -306,6 +306,7 @@ public class NewRandomizerGUI {
     private JCheckBox tpGiveBossesStrongPokemonCheckBox;
     private JCheckBox pmsGuaranteeManyMovesCheckBox;
     private JCheckBox tpTrainersCanHaveMegas;
+    private JCheckBox wpCanHoldMegaStones;
 
     private static JFrame frame;
 
@@ -458,6 +459,7 @@ public class NewRandomizerGUI {
         wpGlobal1To1RadioButton.addActionListener(e -> enableOrDisableSubControls());
         wpSetMinimumCatchRateCheckBox.addActionListener(e -> enableOrDisableSubControls());
         wpRandomizeHeldItemsCheckBox.addActionListener(e -> enableOrDisableSubControls());
+        wpCanHoldMegaStones.addActionListener(e -> enableOrDisableSubControls());
         wpPercentageLevelModifierCheckBox.addActionListener(e -> enableOrDisableSubControls());
         tmUnchangedRadioButton.addActionListener(e -> enableOrDisableSubControls());
         tmRandomRadioButton.addActionListener(e -> enableOrDisableSubControls());
@@ -1615,6 +1617,7 @@ public class NewRandomizerGUI {
         wpARSimilarStrengthRadioButton
                 .setSelected(settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.SIMILAR_STRENGTH);
         wpRandomizeHeldItemsCheckBox.setSelected(settings.isRandomizeWildPokemonHeldItems());
+        wpCanHoldMegaStones.setSelected(settings.isGuaranteeMegaStones());
         wpBanBadItemsCheckBox.setSelected(settings.isBanBadRandomWildPokemonHeldItems());
         wpBalanceShakingGrassPokemonCheckBox.setSelected(settings.isBalanceShakingGrass());
         wpPercentageLevelModifierCheckBox.setSelected(settings.isWildLevelsModified());
@@ -1842,6 +1845,7 @@ public class NewRandomizerGUI {
         settings.setMinimumCatchRateLevel(wpSetMinimumCatchRateSlider.getValue());
         settings.setBlockWildLegendaries(wpDontUseLegendariesCheckBox.isSelected());
         settings.setRandomizeWildPokemonHeldItems(wpRandomizeHeldItemsCheckBox.isSelected() && wpRandomizeHeldItemsCheckBox.isVisible());
+        settings.setGuaranteeMegaStones(wpCanHoldMegaStones.isSelected() && wpCanHoldMegaStones.isVisible());
         settings.setBanBadRandomWildPokemonHeldItems(wpBanBadItemsCheckBox.isSelected() && wpBanBadItemsCheckBox.isVisible());
         settings.setBalanceShakingGrass(wpBalanceShakingGrassPokemonCheckBox.isSelected() && wpBalanceShakingGrassPokemonCheckBox.isVisible());
         settings.setWildLevelsModified(wpPercentageLevelModifierCheckBox.isSelected());
@@ -2491,6 +2495,9 @@ public class NewRandomizerGUI {
         wpRandomizeHeldItemsCheckBox.setVisible(true);
         wpRandomizeHeldItemsCheckBox.setEnabled(false);
         wpRandomizeHeldItemsCheckBox.setSelected(false);
+        wpCanHoldMegaStones.setVisible(true);
+        wpCanHoldMegaStones.setEnabled(false);
+        wpCanHoldMegaStones.setSelected(false);
         wpBanBadItemsCheckBox.setVisible(true);
         wpBanBadItemsCheckBox.setEnabled(false);
         wpBanBadItemsCheckBox.setSelected(false);
@@ -2947,6 +2954,7 @@ public class NewRandomizerGUI {
             wpSetMinimumCatchRateCheckBox.setEnabled(true);
             wpRandomizeHeldItemsCheckBox.setEnabled(true);
             wpRandomizeHeldItemsCheckBox.setVisible(pokemonGeneration != 1);
+            wpCanHoldMegaStones.setVisible(pokemonGeneration == 6 || pokemonGeneration == 7);
             wpBanBadItemsCheckBox.setVisible(pokemonGeneration != 1);
             wpBalanceShakingGrassPokemonCheckBox.setVisible(pokemonGeneration == 5);
             wpPercentageLevelModifierCheckBox.setEnabled(true);
@@ -3560,9 +3568,12 @@ public class NewRandomizerGUI {
                 && wpRandomizeHeldItemsCheckBox.isVisible()
                 && wpRandomizeHeldItemsCheckBox.isEnabled()) { // ??? why all three
             wpBanBadItemsCheckBox.setEnabled(true);
+            wpCanHoldMegaStones.setEnabled(true);
         } else {
             wpBanBadItemsCheckBox.setEnabled(false);
             wpBanBadItemsCheckBox.setSelected(false);
+            wpCanHoldMegaStones.setEnabled(false);
+            wpCanHoldMegaStones.setSelected(false);
         }
 
         if (wpSetMinimumCatchRateCheckBox.isSelected()) {

@@ -38,6 +38,8 @@ import com.dabomstew.pkrandom.pokemon.*;
 
 public interface RomHandler {
 
+    void addMegaStoneHeldItem(Pokemon pk);
+
     abstract class Factory {
         public RomHandler create(Random random) {
             return create(random, null);

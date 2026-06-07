@@ -41,9 +41,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
@@ -390,6 +388,45 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
                 }
             }
             this.setTrainers(currentTrainers, false);
+        }
+    }
+
+    @Override
+    public void addMegaStoneHeldItem(Pokemon pk) {
+        int gen = this.generationOfPokemon();
+        Map<Integer, List<Integer>> megastoneMap;
+        if(gen == 6) {
+            megastoneMap = this.isORAS ? Gen6Constants.speciesToMegaStoneORAS : Gen6Constants.speciesToMegaStoneXY;
+        } else if (gen == 7) {
+            megastoneMap = Gen6Constants.speciesToMegaStoneORAS;
+        } else {
+            return;
+        }
+        List<Integer> megastones = megastoneMap.get(pk.number);
+        if(megastones == null) {
+            return;
+        }
+        Collections.shuffle(megastones);
+        if (pk.guaranteedHeldItem == -1 && pk.commonHeldItem == -1 && pk.rareHeldItem == -1
+                && pk.darkGrassHeldItem == -1) {
+            // No held items at all, abort
+            return;
+        }
+        if (pk.guaranteedHeldItem > 0) {
+            if(megastones.size() > 1) {
+                pk.guaranteedHeldItem = 0;
+                pk.commonHeldItem = megastones.get(0);
+                pk.rareHeldItem = megastones.get(1);
+            } else if (megastones.size() == 1) {
+                pk.guaranteedHeldItem = megastones.get(0);
+            }
+        } else {
+            if(megastones.size() > 1) {
+                pk.commonHeldItem = megastones.get(0);
+                pk.rareHeldItem = megastones.get(1);
+            } else if (megastones.size() == 1) {
+                pk.commonHeldItem = megastones.get(0);
+            }
         }
     }
 }

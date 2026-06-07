@@ -5321,6 +5321,11 @@ public abstract class AbstractRomHandler implements RomHandler {
                 }
             }
 
+            if(pk.megaEvolutionsFrom.size() > 0 && settings.isGuaranteeMegaStones()) {
+                addMegaStoneHeldItem(pk);
+                canHaveDarkGrass = false;
+            }
+
             if (canHaveDarkGrass) {
                 double dgDecision = this.random.nextDouble();
                 if (dgDecision < 0.5) {
@@ -7691,5 +7696,10 @@ public abstract class AbstractRomHandler implements RomHandler {
     @Override
     public void addTrainerMegaEvolutionItems(Settings settings) {
         // Only valid in 3DS generations
+    }
+
+    @Override
+    public void addMegaStoneHeldItem(Pokemon pk) {
+        // Only valid in 3ds generations
     }
 }
