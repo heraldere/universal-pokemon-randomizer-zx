@@ -28,11 +28,7 @@ package com.dabomstew.pkrandom.pokemon;
 import com.dabomstew.pkrandom.Settings;
 import com.dabomstew.pkrandom.constants.Species;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Pokemon implements Comparable<Pokemon> {
@@ -166,7 +162,6 @@ public class Pokemon implements Comparable<Pokemon> {
     }
 
     public void randomizeStatsBoss(Random random, Settings settings) {
-        //TODO: Eventually I'd like this range to be controllable from a setting
         int bst = 800 + random.nextInt(101);
         distributeStatsLogNorm(random, bst);
     }
@@ -247,36 +242,35 @@ public class Pokemon implements Comparable<Pokemon> {
 
     private void distributeStatsLogMega(Random random, int stat_total) {
         Pokemon nonMega = megaEvolutionsTo.get(0).from;
-        int stat_diff = stat_total - nonMega.bst();
-
         //Megas always have the same hp as their non-mega form
         hp = nonMega.hp;
 
-        int previousDistributionSum = nonMega.attack + nonMega.defense
-                                    + nonMega.spatk + nonMega.spdef
-                                    + nonMega.speed;
+        int stat_diff = stat_total - nonMega.bst();
 
         int[] statArr = {nonMega.attack, nonMega.defense, nonMega.spatk, nonMega.spdef, nonMega.speed};
+        double choice = random.nextDouble();
+        System.out.print(name);
+        if(choice > .5) {
+            megaStatsEnhance(random, statArr, stat_diff);
+            System.out.println(" Enhance");
+        } else if (choice > .25) {
+            megaStatsExaggerate(random, statArr, stat_diff);
+            System.out.println(" Exaggerate");
+        } else if (choice > .05) {
+            megaStatsSoften(random, statArr, stat_diff);
+            System.out.println(" Soften");
+        } else {
+            megaStatsRedist(random, statArr, stat_diff);
+            System.out.println(" Redistribute");
+        }
 
-        // The idea here is that higher non-mega stats will tend to have higher weights
-        int atkW = random.nextInt(nonMega.attack);
-        int defW = random.nextInt(nonMega.defense);
-        int spaW = random.nextInt(nonMega.spatk);
-        int spdW = random.nextInt(nonMega.spdef);
-        int speW = random.nextInt(nonMega.speed);
+        boundStatArray(random, statArr, stat_total - hp);
 
-        double totW = atkW + defW + spaW + spdW + speW;
-
-        double[] weightArr = {atkW/totW, defW/totW, spaW/totW, spdW/totW, speW/totW};
-
-
-        attack = Math.max(10, Math.min(255, (int) Math.round( nonMega.attack + stat_diff * atkW/totW)));
-        defense = Math.max(10, Math.min(255, (int) Math.round( nonMega.defense + stat_diff * defW/totW)));
-        spatk = Math.max(10, Math.min(255, (int) Math.round(nonMega.spatk + stat_diff * spaW/totW)));
-        spdef = Math.max(10, Math.min(255, (int) Math.round(nonMega.spdef + stat_diff * spdW/totW)));
-        speed = Math.max(10, Math.min(255, (int) Math.round(nonMega.speed + stat_diff * speW/totW)));
-
-        //TODO: 20-30% chance to decrease the lowest stat by 10-20 and distribute among the rest
+        attack = statArr[0];
+        defense = statArr[1];
+        spatk = statArr[2];
+        spdef = statArr[3];
+        speed = statArr[4];
     }
 
     /**
@@ -292,8 +286,13 @@ public class Pokemon implements Comparable<Pokemon> {
         }
         // If it's a mega evo, just add some bst onto its base forme
         else if(megaEvolutionsTo.size() > 0) {
-            res = megaEvolutionsTo.get(0).from.bst() + random.nextInt(151);
+            int base = megaEvolutionsTo.get(0).from.bst();
+            res = base + 90 + random.nextInt(20);
+            if(base < 450){
+                res += 25; // weak pokemon deserve stronger megas
+            }
         }
+        // TODO: what about primals? And Zygarde 10 vs 50?
         // If it's any other alt forme, it should have the same bst
         else if(baseForme != null) {
             res = baseForme.bst();
@@ -556,5 +555,113 @@ public class Pokemon implements Comparable<Pokemon> {
 
     public int getCosmeticFormNumber(int num) {
         return realCosmeticFormNumbers.isEmpty() ? num : realCosmeticFormNumbers.get(num);
+    }
+
+    private void megaStatsEnhance(Random random, int[] statArr, int stat_diff) {
+        enhanceExcluding(random, statArr, stat_diff, -1);
+    }
+
+    private void megaStatsExaggerate(Random random, int[] statArr, int stat_diff) {
+        Integer[] idx = {0, 1, 2, 3, 4};
+        Arrays.sort(idx, Comparator.comparingInt((Integer i) -> statArr[i]));
+
+        int low1 = idx[0];
+        int low2 = idx[1];
+
+        int statToReduce = random.nextBoolean() ? low1 : low2;
+
+        // 3. Reduce it by 10–30
+        int reduction = 10 + random.nextInt(21);
+        statArr[statToReduce] = Math.max(10, statArr[statToReduce] - reduction);
+        stat_diff += reduction;
+
+        enhanceExcluding(random, statArr, stat_diff, statToReduce);
+    }
+
+    private void megaStatsSoften(Random random, int[] statArr, int stat_diff) {
+        Integer[] idx = {0, 1, 2, 3, 4};
+        Arrays.sort(idx, Comparator.comparingInt((Integer i) -> statArr[i]).reversed());
+
+        int high1 = idx[0];
+        int high2 = idx[1];
+
+        int statToReduce = random.nextBoolean() ? high1 : high2;
+
+        int reduction = 10 + random.nextInt(21);
+        statArr[statToReduce] = Math.max(10, statArr[statToReduce] - reduction);
+        stat_diff += reduction;
+
+        enhanceExcluding(random, statArr, stat_diff, statToReduce);
+    }
+
+    private void megaStatsRedist(Random random, int[] statArr, int stat_diff) {
+        int bstTarget = stat_diff;
+        double entropy = random.nextDouble()*.85;
+        double[] weights = new double[5];
+        double weightTotal = 0;
+        for(int i = 0; i < 5; i++) {
+            bstTarget += statArr[i];
+            weights[i] = getStatRatio(random, entropy);
+            weightTotal += weights[i];
+        }
+        for(int i = 0; i < 5; i++) {
+            statArr[i] = (int) Math.round(bstTarget * weights[i] / weightTotal);
+        }
+    }
+
+    private void boundStatArray(Random random, int[] statArr, int targetSum) {
+        int clampedSum = 0;
+        for (int i = 0; i < 5; i++) {
+            statArr[i] = Math.max(10, Math.min(255, statArr[i]));
+            clampedSum += statArr[i];
+        }
+
+        int diff = targetSum - clampedSum;
+
+        // If we're already close, no need to adjust
+        if (Math.abs(diff) <= 5)
+            return;
+
+        System.out.println("Redistributing: " + name + " Target " + targetSum + " Value " + clampedSum);
+
+        //  Do a few small redistribution passes (May want to add randomness, but this is already an edge case)
+        for (int pass = 0; pass < 10 && diff != 0; pass++) {
+            int remaining = diff;
+
+            for (int i = 0; i < 5 && remaining != 0; i++) {
+                int adj = (int) Math.signum(remaining);
+
+                // Try to apply the adjustment without breaking bounds
+                int newVal = statArr[i] + adj;
+
+                if (newVal >= 10 && newVal <= 255) {
+                    statArr[i] = newVal;
+                    remaining -= adj;
+                }
+            }
+
+            // Update diff for next pass
+            diff = remaining;
+        }
+    }
+
+    private void enhanceExcluding(Random random, int[] statArr, int stat_diff, int excludeIndex) {
+
+        double[] weights = new double[5];
+        double total = 0;
+
+        // Build weights only for the 4 allowed stats
+        for (int i = 0; i < 5; i++) {
+            if (i == excludeIndex) continue;
+            weights[i] = random.nextInt(Math.max(1, statArr[i]));
+            total += weights[i];
+        }
+
+        // Apply boosts only to the 4 allowed stats
+        for (int i = 0; i < 5; i++) {
+            if (i == excludeIndex) continue;
+            double share = weights[i] / total;
+            statArr[i] = (int) Math.round(statArr[i] + stat_diff * share);
+        }
     }
 }
