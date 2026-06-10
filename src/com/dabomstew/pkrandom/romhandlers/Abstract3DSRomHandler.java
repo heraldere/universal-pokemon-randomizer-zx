@@ -32,10 +32,7 @@ import com.dabomstew.pkrandom.ctr.NCCH;
 import com.dabomstew.pkrandom.exceptions.CannotWriteToLocationException;
 import com.dabomstew.pkrandom.exceptions.EncryptedROMException;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
-import com.dabomstew.pkrandom.pokemon.Pokemon;
-import com.dabomstew.pkrandom.pokemon.Trainer;
-import com.dabomstew.pkrandom.pokemon.TrainerPokemon;
-import com.dabomstew.pkrandom.pokemon.Type;
+import com.dabomstew.pkrandom.pokemon.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -376,12 +373,32 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
                     Pokemon species = tp.pokemon;
                     if(megastoneMap.containsKey(species.number)) {
                         int chance = random.nextInt(100);
-                        if((t.isBoss())
-                        || (chance < tp.level)) {
+                        if(t.isImportant() || chance < tp.level) {
                             List<Integer> stones = megastoneMap.get(species.number);
                             tp.heldItem = stones.get(random.nextInt(stones.size()));
                             t.setPokemonHaveItems(true);
                             break; //A trainer should only have one Mega Pokemon
+
+                        } else if (t.isBoss()) {
+                            List<Integer> stones = megastoneMap.get(species.number);
+                            // We make a few assumptions about the data here,
+                            // but boss trainers should get the stronger Mega evolution
+                            if(stones.size() > 1) {
+                                List<MegaEvolution> megas = species.megaEvolutionsFrom;
+                                int bestIndex;
+                                if  (megas.get(0).to.bst() > megas.get(1).to.bst()) {
+                                    bestIndex = 0;
+                                } else if (megas.get(0).to.bst() < megas.get(1).to.bst()) {
+                                    bestIndex = 1;
+                                } else {
+                                    bestIndex = random.nextInt(2);
+                                }
+                                tp.heldItem = stones.get(bestIndex);
+
+                            } else if (stones.size() == 1){
+                                tp.heldItem = stones.get(0);
+                            }
+                            break;
                         }
 
                     }
@@ -428,5 +445,84 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
                 pk.commonHeldItem = megastones.get(0);
             }
         }
+    }
+
+    @Override
+    protected ArrayList<Pokemon> getStrongestPokemonList() {
+        ArrayList<Pokemon> pokesDescendingPower = new ArrayList<>(mainPokemonList);
+        pokesDescendingPower.sort((o1, o2) -> o2.bst() - o1.bst());
+
+        List<MegaEvolution> megaEvoList = getMegaEvolutions();
+
+        ArrayList<Pokemon> megaEvolutionsStrong = new ArrayList<>();
+        for(MegaEvolution evo: megaEvoList) {
+            if(!pokesDescendingPower.remove(evo.from)) {
+                for(MegaEvolution duplicateEvo: evo.from.megaEvolutionsFrom) {
+                    if(!duplicateEvo.to.fullName().equals(evo.to.fullName())) {
+                        Pokemon listedMega = duplicateEvo.to;
+                        Pokemon currentMega = evo.to;
+                        if(currentMega.bst() > listedMega.bst()) {
+                            megaEvolutionsStrong.remove(listedMega);
+                            megaEvolutionsStrong.add(currentMega);
+                        } else if(listedMega.bst() == currentMega.bst()){
+                            double chance = random.nextDouble();
+                            if(chance >= .5) {
+                                megaEvolutionsStrong.remove(listedMega);
+                                megaEvolutionsStrong.add(currentMega);
+                            }
+                        }
+                    }
+                }
+            } else {
+                megaEvolutionsStrong.add(evo.to);
+            }
+        }
+        megaEvolutionsStrong.sort((o1, o2) -> o2.bst() - o1.bst());
+
+        List<Pokemon> merged = new ArrayList<>(pokesDescendingPower.size() + megaEvolutionsStrong.size());
+
+        int i = 0, j = 0;
+        while (i < pokesDescendingPower.size() && j < megaEvolutionsStrong.size()) {
+            Pokemon p1 = pokesDescendingPower.get(i);
+            Pokemon megaP2 = megaEvolutionsStrong.get(j);
+            if (p1.bst() >= megaP2.bst()) {
+                merged.add(p1);
+                i++;
+            } else {
+                Pokemon p2 = megaP2.megaEvolutionsTo.get(0).from;
+                merged.add(p2);
+                j++;
+            }
+        }
+
+        while (i < pokesDescendingPower.size()) merged.add(pokesDescendingPower.get(i++));
+        while (j < megaEvolutionsStrong.size()) merged.add(megaEvolutionsStrong.get(j++).megaEvolutionsTo.get(0).from);
+
+        ArrayList<Pokemon> res = new ArrayList<>();
+        ArrayList<Pokemon> buffer = new ArrayList<>();
+
+        boolean megaUsed = false;
+        i = 0;
+        while(i < 6) {
+            Pokemon p = merged.get(0);
+            merged.remove(0);
+            if(p.megaEvolutionsFrom.size() > 0) {
+                if(!megaUsed) {
+                    res.add(p);
+                    i++;
+                    megaUsed = true;
+                } else {
+                    buffer.add(p);
+                }
+            } else {
+                res.add(p);
+                i++;
+            }
+        }
+
+        res.addAll(buffer);
+        res.addAll(merged);
+
+        return res;
     }
 }

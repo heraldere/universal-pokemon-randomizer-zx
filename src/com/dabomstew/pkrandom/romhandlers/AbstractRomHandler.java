@@ -2016,8 +2016,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         ArrayList<ArrayList<Trainer>> bossSets = getBossSet(currentTrainers);
 
         // First we need a sorted list of all the pokemon by bst
-        ArrayList<Pokemon> pokesDescendingPower = new ArrayList<Pokemon>(mainPokemonList);
-        pokesDescendingPower.sort((o1, o2) -> o2.bst() - o1.bst());
+        ArrayList<Pokemon> pokesDescendingPower = getStrongestPokemonList();
 
         //we're assuming that the list is in sorted order with the final boss being first (bad coding but oh well)
         boolean finalBoss = true;
@@ -2050,6 +2049,12 @@ public abstract class AbstractRomHandler implements RomHandler {
             }
         }
         this.setTrainers(currentTrainers, false);
+    }
+
+    protected ArrayList<Pokemon> getStrongestPokemonList() {
+        ArrayList<Pokemon> pokesDescendingPower = new ArrayList<Pokemon>(mainPokemonList);
+        pokesDescendingPower.sort((o1, o2) -> o2.bst() - o1.bst());
+        return pokesDescendingPower;
     }
 
     /**
