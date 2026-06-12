@@ -249,19 +249,14 @@ public class Pokemon implements Comparable<Pokemon> {
 
         int[] statArr = {nonMega.attack, nonMega.defense, nonMega.spatk, nonMega.spdef, nonMega.speed};
         double choice = random.nextDouble();
-        System.out.print(name);
         if(choice > .5) {
             megaStatsEnhance(random, statArr, stat_diff);
-            System.out.println(" Enhance");
         } else if (choice > .25) {
             megaStatsExaggerate(random, statArr, stat_diff);
-            System.out.println(" Exaggerate");
         } else if (choice > .05) {
             megaStatsSoften(random, statArr, stat_diff);
-            System.out.println(" Soften");
         } else {
             megaStatsRedist(random, statArr, stat_diff);
-            System.out.println(" Redistribute");
         }
 
         boundStatArray(random, statArr, stat_total - hp);
@@ -622,7 +617,7 @@ public class Pokemon implements Comparable<Pokemon> {
         if (Math.abs(diff) <= 5)
             return;
 
-        System.out.println("Redistributing: " + name + " Target " + targetSum + " Value " + clampedSum);
+//        System.out.println("Redistributing: " + name + " Target " + targetSum + " Value " + clampedSum);
 
         //  Do a few small redistribution passes (May want to add randomness, but this is already an edge case)
         for (int pass = 0; pass < 10 && diff != 0; pass++) {
@@ -640,7 +635,6 @@ public class Pokemon implements Comparable<Pokemon> {
                 }
             }
 
-            // Update diff for next pass
             diff = remaining;
         }
     }

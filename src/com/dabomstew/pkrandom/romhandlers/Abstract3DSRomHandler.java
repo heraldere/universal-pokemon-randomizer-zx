@@ -423,7 +423,7 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
         if(megastones == null) {
             return;
         }
-        Collections.shuffle(megastones);
+        Collections.shuffle(megastones, random);
         if (pk.guaranteedHeldItem == -1 && pk.commonHeldItem == -1 && pk.rareHeldItem == -1
                 && pk.darkGrassHeldItem == -1) {
             // No held items at all, abort
@@ -448,7 +448,11 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
     }
 
     @Override
-    protected ArrayList<Pokemon> getStrongestPokemonList() {
+    protected ArrayList<Pokemon> getStrongestPokemonList(Settings settings) {
+        if(!settings.isTrainersCanHaveMegas()) {
+            // No point in giving Mega Pokemon to trainers that can't mega evolve. Use default behavior
+            super.getStrongestPokemonList(settings);
+        }
         ArrayList<Pokemon> pokesDescendingPower = new ArrayList<>(mainPokemonList);
         pokesDescendingPower.sort((o1, o2) -> o2.bst() - o1.bst());
 
@@ -456,6 +460,9 @@ public abstract class Abstract3DSRomHandler extends AbstractRomHandler {
 
         ArrayList<Pokemon> megaEvolutionsStrong = new ArrayList<>();
         for(MegaEvolution evo: megaEvoList) {
+            if(evo.method != 1) {
+                continue; // Sorry Rayquaza, but there's no reliable way for you to Mega
+            }
             if(!pokesDescendingPower.remove(evo.from)) {
                 for(MegaEvolution duplicateEvo: evo.from.megaEvolutionsFrom) {
                     if(!duplicateEvo.to.fullName().equals(evo.to.fullName())) {

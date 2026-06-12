@@ -530,18 +530,21 @@ public abstract class AbstractRomHandler implements RomHandler {
         if (megaEvolutionSanity) {
             List<MegaEvolution> allMegaEvos = getMegaEvolutions();
             for (MegaEvolution megaEvo: allMegaEvos) {
-                if (megaEvo.from.megaEvolutionsFrom.size() > 1) continue;
+                double chanceToChangeType = .25;
+                if (megaEvo.from.megaEvolutionsFrom.size() > 1) {
+                    chanceToChangeType = .75;
+                }
                 megaEvo.to.primaryType = megaEvo.from.primaryType;
                 megaEvo.to.secondaryType = megaEvo.from.secondaryType;
 
-                if (megaEvo.to.secondaryType == null) {
-                    if (this.random.nextDouble() < 0.25) {
+//                if (megaEvo.to.secondaryType == null) { //Why limit to only single type case?
+                    if (this.random.nextDouble() < chanceToChangeType) {
                         megaEvo.to.secondaryType = randomType();
                         while (megaEvo.to.secondaryType == megaEvo.to.primaryType) {
                             megaEvo.to.secondaryType = randomType();
                         }
                     }
-                }
+//                }
             }
         }
     }
@@ -2016,7 +2019,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         ArrayList<ArrayList<Trainer>> bossSets = getBossSet(currentTrainers);
 
         // First we need a sorted list of all the pokemon by bst
-        ArrayList<Pokemon> pokesDescendingPower = getStrongestPokemonList();
+        ArrayList<Pokemon> pokesDescendingPower = getStrongestPokemonList(settings);
 
         //we're assuming that the list is in sorted order with the final boss being first (bad coding but oh well)
         boolean finalBoss = true;
@@ -2051,7 +2054,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         this.setTrainers(currentTrainers, false);
     }
 
-    protected ArrayList<Pokemon> getStrongestPokemonList() {
+    protected ArrayList<Pokemon> getStrongestPokemonList(Settings settings) {
         ArrayList<Pokemon> pokesDescendingPower = new ArrayList<Pokemon>(mainPokemonList);
         pokesDescendingPower.sort((o1, o2) -> o2.bst() - o1.bst());
         return pokesDescendingPower;
@@ -2419,7 +2422,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 if (t.isImportant()) {
                     trainerTypeModifier = 1.5;
                 } else if (t.isBoss()) {
-                    trainerTypeModifier = 2;
+                    trainerTypeModifier = 2.5;
                 }
                 double movePoolSizeModifier = movesAtLevel.size() / 10.0;
                 double bonusModifier = trainerTypeModifier * movePoolSizeModifier;
@@ -3560,6 +3563,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 moves.clear();
                 for (int i = 1; i <= movesToLearn; i++) {
                     int lvl = 3*i;
+                    lvl += random.nextInt(3) - 1;
                     MoveLearnt fakeMove = new MoveLearnt();
                     fakeMove.level = lvl;
                     fakeMove.move = 0;
